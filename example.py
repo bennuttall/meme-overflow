@@ -1,4 +1,4 @@
-from memes import MemeGenerator
+from memegenerator import MemeGenerator
 
 stackexchange = 'raspberrypi'
 

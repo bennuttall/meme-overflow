@@ -1,15 +1,17 @@
+from db import MemeDatabase
+
 import requests
 import random
 from time import sleep
 from io import BytesIO
 import html
-from collections import deque
 
-from twython import Twython
+from twython import Twython, TwythonError
 
 
 class MemeGenerator:
     def __init__(self, twitter, imgflip, stackexchange):
+        self.db = MemeDatabase(stackexchange)
         self.meme_ids = self.get_meme_ids()
         self.twitter = Twython(
             twitter['con_key'],
@@ -55,23 +57,22 @@ class MemeGenerator:
         self.twitter.update_status(status=status, media_ids=media_ids)
 
     def main(self):
-        tweeted = deque(maxlen=50)
         while True:
             questions = self.get_se_questions(10)
             for q in questions:
                 question = html.unescape(q['title'])
                 question_url = q['link']
-                if question_url in tweeted:
+                if self.db.select(question_url):
                     print(f'Skipping: {question}')
                     continue
                 status = f'{question} {question_url}'
                 img_url = self.make_meme(question)
-                print(f'Tweeting: {question}')
                 try:
                     self.tweet(status, img_url)
-                except:
+                    print(f'Tweeted: {question}')
+                except TwythonError:
                     print(f'Failed to tweet: {question}')
                     continue
-                tweeted.append(question_url)
+                self.db.insert(question_url)
                 sleep(60)
             sleep(60)
