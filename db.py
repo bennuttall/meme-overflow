@@ -4,7 +4,7 @@ import sqlite3
 class MemeDatabase:
     def __init__(self, database):
         self.database = database
-        self.conn = sqlite3.connect(f'{database}.db')
+        self.conn = sqlite3.connect('memes.db')
         cursor = self.conn.cursor()
         cursor.execute(f"create table if not exists {database} (url text)")
         cursor.close()
