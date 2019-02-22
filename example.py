@@ -1,6 +1,8 @@
 from memegenerator import MemeGenerator
 
-stackexchange = 'raspberrypi'
+stackexchange = {
+    'site': '',
+    'key': '',
 
 twitter = {
     'con_key': '',

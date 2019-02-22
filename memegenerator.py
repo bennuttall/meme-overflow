@@ -11,7 +11,7 @@ from twython import Twython, TwythonError
 
 class MemeGenerator:
     def __init__(self, twitter, imgflip, stackexchange):
-        self.db = MemeDatabase(stackexchange)
+        self.db = MemeDatabase(stackexchange['site'])
         self.meme_ids = self.get_meme_ids()
         self.twitter = Twython(
             twitter['con_key'],
@@ -20,7 +20,7 @@ class MemeGenerator:
             twitter['acc_sec']
         )
         self.imgflip = imgflip
-        self.stackexchange = stackexchange
+        self.stackexchange = stackexchange['site']
         self.main()
 
     def get_meme_ids(self):
@@ -44,7 +44,8 @@ class MemeGenerator:
         url = 'https://api.stackexchange.com/2.2/questions'
         params = {
             'pagesize': n,
-            'site': self.stackexchange
+            'site': self.stackexchange['site'],
+            'key': self.stackexchange.get('key', None),
         }
         r = requests.get(url, params)
         if r:
