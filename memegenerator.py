@@ -58,7 +58,7 @@ class MemeGenerator:
 
     def main(self):
         while True:
-            questions = self.get_se_questions(10)
+            questions = self.get_se_questions(100)
             for q in questions:
                 question = html.unescape(q['title'])
                 question_url = q['link']
