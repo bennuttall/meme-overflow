@@ -70,8 +70,8 @@ class MemeGenerator:
                 try:
                     self.tweet(status, img_url)
                     print(f'Tweeted: {question}')
-                except TwythonError:
-                    print(f'Failed to tweet: {question}')
+                except TwythonError as e:
+                    print(f'Failed to tweet: {e}')
                     continue
                 self.db.insert(question_url)
                 sleep(60)
