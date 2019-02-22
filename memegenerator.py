@@ -75,5 +75,5 @@ class MemeGenerator:
                     print(f'Failed to tweet: {e}')
                     continue
                 self.db.insert(question_url)
-                sleep(60)
-            sleep(60)
+                sleep(60*5)
+            sleep(60*5)
