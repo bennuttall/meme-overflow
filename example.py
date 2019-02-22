@@ -3,6 +3,7 @@ from memegenerator import MemeGenerator
 stackexchange = {
     'site': '',
     'key': '',
+}
 
 twitter = {
     'con_key': '',
@@ -17,3 +18,4 @@ imgflip = {
 }
 
 mg = MemeGenerator(twitter, imgflip, stackexchange)
+mg.main()
