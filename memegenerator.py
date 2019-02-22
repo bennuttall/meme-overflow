@@ -20,7 +20,7 @@ class MemeGenerator:
             twitter['acc_sec']
         )
         self.imgflip = imgflip
-        self.stackexchange = stackexchange['site']
+        self.stackexchange = stackexchange
         self.main()
 
     def get_meme_ids(self):
