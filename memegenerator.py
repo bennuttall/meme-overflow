@@ -50,6 +50,9 @@ class MemeGenerator:
         r = requests.get(url, params)
         if r:
             return r.json()['items']
+        else:
+            print("Failed to reach StackExchange")
+            return []
 
     def tweet(self, status, img_url):
         img = BytesIO(requests.get(img_url).content)
