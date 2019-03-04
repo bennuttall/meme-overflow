@@ -1,15 +1,15 @@
-from db import MemeDatabase
+from .db import MemeDatabase
 
-import requests
 import random
 from time import sleep
 from io import BytesIO
 import html
 
+import requests
 from twython import Twython, TwythonError
 
 
-class MemeGenerator:
+class MemeOverflow:
     """
     Class for generating and tweeting memes of questions from a given
     StackExchange site
@@ -40,7 +40,7 @@ class MemeGenerator:
         self.stackexchange = stackexchange
 
     def __repr__(self):
-        return f"<MemeGenerator object for site {self.stackexchange['site']}>"
+        return f"<MemeOverflow object for site {self.stackexchange['site']}>"
 
     def get_meme_ids(self):
         """

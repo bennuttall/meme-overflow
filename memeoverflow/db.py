@@ -17,6 +17,9 @@ class MemeDatabase:
         cursor.execute(f"create table if not exists {site} (url text)")
         cursor.close()
 
+    def __repr__(self):
+        return f"<MemeDatabase object for site {self.site}>"
+
     def insert(self, url):
         """
         Insert the url provided into the database

@@ -1,4 +1,4 @@
-from memegenerator import MemeGenerator
+from memeoverflow import MemeOverflow
 
 stackexchange = {
     'site': '',
@@ -17,5 +17,5 @@ imgflip = {
     'pass': '',
 }
 
-mg = MemeGenerator(twitter, imgflip, stackexchange)
-mg.main()
+mo = MemeOverflow(twitter, imgflip, stackexchange)
+mo.main()
