@@ -1,4 +1,5 @@
 from .db import MemeDatabase
+from .memes import *
 
 import random
 from time import sleep
@@ -60,7 +61,7 @@ class MemeOverflow:
                 img_url, meme_id = self.make_meme(question)
                 try:
                     self.tweet(status, img_url)
-                    print(f'Tweeted: {question} [meme #{meme_id}]')
+                    print(f'Tweeted: {question} [meme {meme_id}]')
                 except TwythonError as e:
                     print(f'Failed to tweet: {e}')
                     continue
@@ -80,14 +81,37 @@ class MemeOverflow:
     def make_meme(self, text):
         """
         Generate a random meme with the supplied text, and return its URL
+
+        (some logic used to determine a suitable meme for the supplied text,
+        see implementation for details)
         """
         url = 'https://api.imgflip.com/caption_image'
-        meme_id = self.db.select_random_meme()
+        text0 = text
+        text1 = None
+
+        if text.lower().startswith("is this "):
+            meme_id = IS_THIS
+            text0 = "is this"
+            text1 = text[8:]
+        elif text.count('"') == 2:
+            meme_id = DR_EVIL
+        else:
+            meme_id = self.db.select_random_meme()
+
+        if meme_id == PETER_PARKER_CRY:
+            text0 = None
+            text1 = text
+        elif meme_id == CHANGE_MY_MIND:
+            if text.endswith('?'):
+                # try again
+                return self.make_meme(text)
+
         data = {
             'username': self.imgflip['user'],
             'password': self.imgflip['pass'],
             'template_id': meme_id,
-            'text0': text,
+            'text0': text0,
+            'text1': text1,
         }
         r = requests.post(url, data=data)
         try:

@@ -14,7 +14,7 @@ class MemeDatabase:
         self.conn = sqlite3.connect('memes.db')
         cursor = self.conn.cursor()
         cursor.execute(f"create table if not exists {site} (question_id int unique)")
-        cursor.execute(f"create table if not exists memes (meme_id int unique, meme_name text, blacklisted bool)")
+        cursor.execute(f"create table if not exists memes (meme_id int unique, meme_name text, blacklisted bool, include_random bool)")
         cursor.close()
 
     def __repr__(self):
@@ -26,7 +26,7 @@ class MemeDatabase:
         """
         cursor = self.conn.cursor()
         try:
-            cursor.executemany("insert or ignore into memes values (?, ?, 0)", memes)
+            cursor.executemany("insert or ignore into memes values (?, ?, 0, 1)", memes)
             self.conn.commit()
         except sqlite3.IntegrityError:
             pass
@@ -37,7 +37,7 @@ class MemeDatabase:
         Select a random meme ID
         """
         cursor = self.conn.cursor()
-        cursor.execute(f"select meme_id from memes where not blacklisted order by random() limit 1")
+        cursor.execute(f"select meme_id from memes where include_random and not blacklisted order by random() limit 1")
         result = cursor.fetchone()
         cursor.close()
         return result[0]
