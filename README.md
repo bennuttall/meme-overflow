@@ -1,5 +1,7 @@
 # Meme Overflow
 
+[![](https://badge.fury.io/py/memeoverflow.svg)](https://badge.fury.io/py/memeoverflow)
+
 Take questions posted on a particular Stack Exchange site, generate a meme out
 of them and tweet them.
 
