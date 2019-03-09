@@ -42,12 +42,32 @@ class MemeDatabase:
         cursor.close()
         return result[0]
 
+    def select_meme(self, id):
+        """
+        Look up a specific meme by ID
+        """
+        cursor = self.conn.cursor()
+        cursor.execute(f"select meme_name from memes where meme_id = ?", (id, ))
+        result = cursor.fetchone()
+        cursor.close()
+        return result[0]
+
+    def search_for_meme(self, search):
+        """
+        Look up a specific meme by searching
+        """
+        cursor = self.conn.cursor()
+        cursor.execute(f"select * from memes where lower(meme_name) like ?", (f'%{search}%', ))
+        results = cursor.fetchall()
+        cursor.close()
+        return results
+
     def blacklist_meme(self, id):
         """
         Blacklist a meme ID
         """
         cursor = self.conn.cursor()
-        cursor.execute(f"update memes set blacklisted = true where meme_id = ?", (id, ))
+        cursor.execute(f"update memes set blacklisted = 1 where meme_id = ?", (id, ))
         self.conn.commit()
         cursor.close()
 

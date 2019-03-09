@@ -1,1 +1,1 @@
-from .memeoverflow import MemeOverflow
+from .memeoverflow import MemeOverflow, MemeDatabase

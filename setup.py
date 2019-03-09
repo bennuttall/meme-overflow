@@ -7,7 +7,7 @@ def read(fname):
 
 setup(
     name="memeoverflow",
-    version="0.2.0",
+    version="0.2.3",
     author="Ben Nuttall",
     description="Take questions posted on a particular Stack Exchange site, generate a meme out of it and tweet it",
     license="OSI Approved :: BSD License",
