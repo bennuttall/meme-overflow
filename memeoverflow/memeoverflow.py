@@ -14,16 +14,13 @@ class MemeOverflow:
     Class for generating and tweeting memes of questions from a given
     StackExchange site
 
-    :type twitter: dict
-    :param twitter:
+    :param dict twitter:
         Expected keys: con_key, con_sec, acc_tok, acc_sec (Twitter API keys)
 
-    :type imgflip: dict
-    :param imgflip:
+    :param dict imgflip:
         Expected keys: user, pass (imgflip account)
 
-    :type stackexchange: dict
-    :param stackexchange:
+    :param dict stackexchange:
         Expects key: site (StackExchange site name)
         Optional key: key (StackExchange API key)
     """
@@ -41,6 +38,35 @@ class MemeOverflow:
 
     def __repr__(self):
         return f"<MemeOverflow object for site {self.stackexchange['site']}>"
+
+    def __call__(self):
+        """
+        Main loop: look up questions, for each question:
+        - check database
+        - generate meme
+        - tweet it
+        - add to database
+        """
+        while True:
+            questions = self.get_se_questions(100)
+            for q in questions:
+                question = html.unescape(q['title'])
+                question_url = q['link']
+                question_id = q['id']
+                if self.db.select(question_id):
+                    print(f'Skipping: {question}')
+                    continue
+                status = f'{question} {question_url}'
+                img_url = self.make_meme(question)
+                try:
+                    self.tweet(status, img_url)
+                    print(f'Tweeted: {question}')
+                except TwythonError as e:
+                    print(f'Failed to tweet: {e}')
+                    continue
+                self.db.insert(question_id)
+                sleep(60*5)
+            sleep(60*5)
 
     def get_meme_ids(self):
         """
@@ -92,31 +118,3 @@ class MemeOverflow:
         response = self.twitter.upload_media(media=img)
         media_ids = [response['media_id']]
         self.twitter.update_status(status=status, media_ids=media_ids)
-
-    def main(self):
-        """
-        Main loop: look up questions, for each question:
-        - check database
-        - generate meme
-        - tweet it
-        - add to database
-        """
-        while True:
-            questions = self.get_se_questions(100)
-            for q in questions:
-                question = html.unescape(q['title'])
-                question_url = q['link']
-                if self.db.select(question_url):
-                    print(f'Skipping: {question}')
-                    continue
-                status = f'{question} {question_url}'
-                img_url = self.make_meme(question)
-                try:
-                    self.tweet(status, img_url)
-                    print(f'Tweeted: {question}')
-                except TwythonError as e:
-                    print(f'Failed to tweet: {e}')
-                    continue
-                self.db.insert(question_url)
-                sleep(60*5)
-            sleep(60*5)

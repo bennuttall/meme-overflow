@@ -17,5 +17,7 @@ imgflip = {
     'pass': '',
 }
 
-mo = MemeOverflow(twitter, imgflip, stackexchange)
-mo.main()
+main = MemeOverflow(twitter, imgflip, stackexchange)
+
+if __name__ == '__main__':
+    main()
