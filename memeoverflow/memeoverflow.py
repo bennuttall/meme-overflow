@@ -26,7 +26,6 @@ class MemeOverflow:
     """
     def __init__(self, twitter, imgflip, stackexchange):
         self.db = MemeDatabase(stackexchange['site'])
-        self.meme_ids = self.get_meme_ids()
         self.twitter = Twython(
             twitter['con_key'],
             twitter['con_sec'],
@@ -48,12 +47,13 @@ class MemeOverflow:
         - add to database
         """
         while True:
+            self.update_meme_database()
             questions = self.get_se_questions(100)
             for q in questions:
                 question = html.unescape(q['title'])
                 question_url = q['link']
                 question_id = q['question_id']
-                if self.db.select(question_id):
+                if self.db.question_is_known(question_id):
                     print(f'Skipping: {question}')
                     continue
                 status = f'{question} {question_url}'
@@ -64,34 +64,40 @@ class MemeOverflow:
                 except TwythonError as e:
                     print(f'Failed to tweet: {e}')
                     continue
-                self.db.insert(question_id)
+                self.db.insert_question(question_id)
                 sleep(60*5)
             sleep(60*5)
 
-    def get_meme_ids(self):
+    def update_meme_database(self):
         """
-        Return a list of meme IDs from imgflip (minus those in the blacklist)
+        Get list of memes from imgflip and add them to the database
         """
         url = 'https://api.imgflip.com/get_memes'
         memes = requests.get(url).json()
-        blacklist = []
-        return [m['id'] for m in memes['data']['memes']
-                if m['id'] not in blacklist]
+        for m in memes['data']['memes']:
+            self.db.insert_meme(m['id'], m['name'])
 
     def make_meme(self, text):
         """
         Generate a random meme with the supplied text, and return its URL
         """
         url = 'https://api.imgflip.com/caption_image'
+        meme_id = self.db.select_random_meme()
         data = {
             'username': self.imgflip['user'],
             'password': self.imgflip['pass'],
-            'template_id': random.choice(self.meme_ids),
+            'template_id': meme_id,
             'text0': text,
         }
         r = requests.post(url, data=data)
         if r:
-            return r.json()['data']['url']
+            try:
+                return r.json()['data']['url']
+            except KeyError:
+                # blacklist the meme and try another one
+                self.db.blacklist_meme(meme_id)
+                print(f"Blacklisted meme {meme_id}, trying again")
+                return self.make_meme(text)
 
     def get_se_questions(self, n=1):
         """

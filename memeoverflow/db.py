@@ -13,22 +13,54 @@ class MemeDatabase:
         self.site = site
         self.conn = sqlite3.connect('memes.db')
         cursor = self.conn.cursor()
-        cursor.execute(f"create table if not exists {site} (question_id int)")
+        cursor.execute(f"create table if not exists {site} (question_id int unique)")
+        cursor.execute(f"create table if not exists memes (meme_id int unique, meme_name text, blacklisted bool)")
         cursor.close()
 
     def __repr__(self):
         return f"<MemeDatabase object for site {self.site}>"
 
-    def insert(self, id):
+    def insert_meme(self, id, name):
         """
-        Insert the question ID provided into the database
+        Insert a meme ID
+        """
+        cursor = self.conn.cursor()
+        try:
+            cursor.execute(f"insert into memes values (?, ?, 0)", (id, name))
+            self.conn.commit()
+        except sqlite3.IntegrityError:
+            pass
+        cursor.close()
+
+    def select_random_meme(self):
+        """
+        Select a random meme ID
+        """
+        cursor = self.conn.cursor()
+        cursor.execute(f"select meme_id from memes where not blacklisted order by random() limit 1")
+        result = cursor.fetchone()
+        cursor.close()
+        return result
+
+    def blacklist_meme(self, id):
+        """
+        Blacklist a meme ID
+        """
+        cursor = self.conn.cursor()
+        cursor.execute(f"update memes set blacklisted = true where meme_id = ?", (id, ))
+        self.conn.commit()
+        cursor.close()
+
+    def insert_question(self, id):
+        """
+        Insert a question ID
         """
         cursor = self.conn.cursor()
         cursor.execute(f"insert into {self.site} values (?)", (id, ))
         self.conn.commit()
         cursor.close()
 
-    def select(self, id):
+    def question_is_known(self, id):
         """
         Return True if the provided question ID is already in the database,
         otherwise return False
