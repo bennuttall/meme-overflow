@@ -1,7 +1,7 @@
 # Meme Overflow
 
 Take questions posted on a particular Stack Exchange site, generate a meme out
-of it and tweet it.
+of them and tweet them.
 
 ![](fry.jpg)
 

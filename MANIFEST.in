@@ -1,3 +1,2 @@
-include README.md
+include description.rst
 include LICENSE.md
-include fry.png
