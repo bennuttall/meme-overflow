@@ -74,8 +74,8 @@ class MemeOverflow:
         """
         url = 'https://api.imgflip.com/get_memes'
         memes = requests.get(url).json()
-        for m in memes['data']['memes']:
-            self.db.insert_meme(m['id'], m['name'])
+        memes = [(m['id'], m['name']) for m in memes['data']['memes']]
+        self.db.insert_memes(memes)
 
     def make_meme(self, text):
         """

@@ -20,13 +20,13 @@ class MemeDatabase:
     def __repr__(self):
         return f"<MemeDatabase object for site {self.site}>"
 
-    def insert_meme(self, id, name):
+    def insert_memes(self, memes):
         """
-        Insert a meme ID
+        Insert memes
         """
         cursor = self.conn.cursor()
         try:
-            cursor.execute(f"insert into memes values (?, ?, 0)", (id, name))
+            cursor.executemany("insert or ignore into memes values (?, ?, 0)", memes)
             self.conn.commit()
         except sqlite3.IntegrityError:
             pass
