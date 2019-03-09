@@ -9,7 +9,8 @@ Meme Overflow
 Take questions posted on a particular Stack Exchange site, generate a meme out
 of them and tweet them.
 
-## Instances
+Instances
+=========
 
 * `@pi_stack`_ (Raspberry Pi)
 * `@overflow_meme`_ (Stack Overflow)
