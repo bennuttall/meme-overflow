@@ -40,7 +40,7 @@ class MemeDatabase:
         cursor.execute(f"select meme_id from memes where not blacklisted order by random() limit 1")
         result = cursor.fetchone()
         cursor.close()
-        return result
+        return result[0]
 
     def blacklist_meme(self, id):
         """

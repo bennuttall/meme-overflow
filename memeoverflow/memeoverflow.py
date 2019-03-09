@@ -57,10 +57,10 @@ class MemeOverflow:
                     print(f'Skipping: {question}')
                     continue
                 status = f'{question} {question_url}'
-                img_url = self.make_meme(question)
+                img_url, meme_id = self.make_meme(question)
                 try:
                     self.tweet(status, img_url)
-                    print(f'Tweeted: {question}')
+                    print(f'Tweeted: {question} [meme #{meme_id}]')
                 except TwythonError as e:
                     print(f'Failed to tweet: {e}')
                     continue
@@ -90,14 +90,14 @@ class MemeOverflow:
             'text0': text,
         }
         r = requests.post(url, data=data)
-        if r:
-            try:
-                return r.json()['data']['url']
-            except KeyError:
-                # blacklist the meme and try another one
-                self.db.blacklist_meme(meme_id)
-                print(f"Blacklisted meme {meme_id}, trying again")
-                return self.make_meme(text)
+        try:
+            img_url = r.json()['data']['url']
+            return (img_url, meme_id)
+        except KeyError:
+            # blacklist the meme and try another one
+            self.db.blacklist_meme(meme_id)
+            print(f"Blacklisted meme {meme_id}, trying again")
+            return self.make_meme(text)
 
     def get_se_questions(self, n=1):
         """
