@@ -52,7 +52,7 @@ class MemeOverflow:
             for q in questions:
                 question = html.unescape(q['title'])
                 question_url = q['link']
-                question_id = q['id']
+                question_id = q['question_id']
                 if self.db.select(question_id):
                     print(f'Skipping: {question}')
                     continue
