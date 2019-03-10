@@ -55,7 +55,6 @@ class MemeOverflow:
                 question_url = q['link']
                 question_id = q['question_id']
                 if self.db.question_is_known(question_id):
-                    print(f'Skipping: {question}')
                     continue
                 status = f'{question} {question_url}'
                 img_url, meme_id = self.make_meme(question)
@@ -64,6 +63,7 @@ class MemeOverflow:
                     print(f'Tweeted: {question} [meme {meme_id}]')
                 except TwythonError as e:
                     print(f'Failed to tweet: {e}')
+                    sleep(60)
                     continue
                 self.db.insert_question(question_id)
                 sleep(60*5)
@@ -101,8 +101,18 @@ class MemeOverflow:
         if meme_id == PETER_PARKER_CRY:
             text0 = None
             text1 = text
+        elif meme_id == KERMIT_BUSINESS:
+            if text.endswith('?'):
+                # try again
+                return self.make_meme(text)
+            text0 = text
+            text1 = "But that's none of my business"
         elif meme_id == CHANGE_MY_MIND:
             if text.endswith('?'):
+                # try again
+                return self.make_meme(text)
+        elif meme_id == PHILOSORAPTOR:
+            if not text.endswith('?'):
                 # try again
                 return self.make_meme(text)
 
