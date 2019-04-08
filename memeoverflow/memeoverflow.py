@@ -8,6 +8,7 @@ import html
 
 import requests
 from twython import Twython, TwythonError
+from logzero import logger
 
 
 class MemeOverflow:
@@ -60,9 +61,9 @@ class MemeOverflow:
                 img_url, meme_id = self.make_meme(question)
                 try:
                     self.tweet(status, img_url)
-                    print(f'Tweeted: {question} [meme {meme_id}]')
+                    logger.info(f'Tweeted: {question} [meme {meme_id}]')
                 except TwythonError as e:
-                    print(f'Failed to tweet: {e}')
+                    logger.exception(e)
                     sleep(60)
                     continue
                 self.db.insert_question(question_id)
@@ -80,7 +81,7 @@ class MemeOverflow:
             memes = [(m['id'], m['name']) for m in memes['data']['memes']]
             self.db.insert_memes(memes)
         except Exception as e:
-            print(f'Failed to reach imgflip to update meme database: {e}')
+            logger.exception(e)
 
     def make_meme(self, text):
         """
@@ -135,10 +136,10 @@ class MemeOverflow:
             except KeyError:
                 # blacklist the meme and try another one
                 self.db.blacklist_meme(meme_id)
-                print(f'Blacklisted meme {meme_id}, trying again')
+                logger.warn(f'Blacklisted meme {meme_id}, trying again')
                 return self.make_meme(text)
         except Exception as e:
-            print(f'Error posting to imgflip, trying again: {e}')
+            logger.exception(e)
             sleep(30)
             return self.make_meme(text)
 
@@ -156,7 +157,7 @@ class MemeOverflow:
             r = requests.get(url, params)
             return r.json()['items']
         except Exception as e:
-            print(f'Failed to reach StackExchange: {e}')
+            logger.exception(e)
             return []
 
     def tweet(self, status, img_url):
@@ -170,4 +171,4 @@ class MemeOverflow:
             media_ids = [response['media_id']]
             self.twitter.update_status(status=status, media_ids=media_ids)
         except Exception as e:
-            print(f'Failed to reach imgflip: {e}')
+            logger.exception(e)

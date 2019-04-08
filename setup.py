@@ -7,7 +7,7 @@ def read(fname):
 
 setup(
     name="memeoverflow",
-    version="0.3.0",
+    version="0.3.1",
     author="Ben Nuttall",
     description="Take questions posted on a particular Stack Exchange site, generate a meme out of it and tweet it",
     license="OSI Approved :: BSD License",
@@ -22,6 +22,7 @@ setup(
     requires=[
         'requests',
         'twython',
+        'logzero',
     ],
     long_description=read('description.rst'),
     classifiers=[
