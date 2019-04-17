@@ -63,7 +63,7 @@ class MemeOverflow:
                     self.tweet(status, img_url)
                     logger.info(f'Tweeted: {question} [meme {meme_id}]')
                 except TwythonError as e:
-                    logger.exception(e)
+                    logger.error(f'{e.__class__.__name__}: {e}')
                     sleep(60)
                     continue
                 self.db.insert_question(question_id)
@@ -81,7 +81,7 @@ class MemeOverflow:
             memes = [(m['id'], m['name']) for m in memes['data']['memes']]
             self.db.insert_memes(memes)
         except Exception as e:
-            logger.exception(e)
+            logger.error(f'{e.__class__.__name__}: {e}')
 
     def make_meme(self, text):
         """
@@ -93,6 +93,8 @@ class MemeOverflow:
         url = 'https://api.imgflip.com/caption_image'
         text0 = text
         text1 = None
+        print(text)
+        print(self.db.select_random_meme())
 
         if text.lower().startswith("is this "):
             meme_id = IS_THIS
@@ -139,7 +141,7 @@ class MemeOverflow:
                 logger.warn(f'Blacklisted meme {meme_id}, trying again')
                 return self.make_meme(text)
         except Exception as e:
-            logger.exception(e)
+            logger.error(f'{e.__class__.__name__}: {e}')
             sleep(30)
             return self.make_meme(text)
 
@@ -157,7 +159,7 @@ class MemeOverflow:
             r = requests.get(url, params)
             return r.json()['items']
         except Exception as e:
-            logger.exception(e)
+            logger.error(f'{e.__class__.__name__}: {e}')
             return []
 
     def tweet(self, status, img_url):
@@ -171,4 +173,4 @@ class MemeOverflow:
             media_ids = [response['media_id']]
             self.twitter.update_status(status=status, media_ids=media_ids)
         except Exception as e:
-            logger.exception(e)
+            logger.error(f'{e.__class__.__name__}: {e}')
