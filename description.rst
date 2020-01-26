@@ -6,8 +6,22 @@ Meme Overflow
     :target: https://badge.fury.io/py/memeoverflow
     :alt: Latest Version
 
+A simple framework for Twitter bots creating memes from Stack Exchange
+questions.
+
 Take questions posted on a particular Stack Exchange site, generate a meme out
 of them and tweet them.
+
+Uses the following APIs:
+
+- `Stack Exchange`_
+- `Twitter`_ (via `Twython`_)
+- `imgflip`_
+
+.. _Stack Exchange: https://api.stackexchange.com/
+.. _Twitter: https://developer.twitter.com/en/docs/api-reference-index
+.. _Twython: https://twython.readthedocs.io/en/latest/
+.. _imgflip: https://api.imgflip.com/
 
 Instances
 =========

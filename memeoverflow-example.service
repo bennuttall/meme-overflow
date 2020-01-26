@@ -1,0 +1,12 @@
+[Unit]
+Description=Example memeoverflow service
+After=network.target
+
+[Service]
+Type=notify
+Restart=on-failure
+User=ben
+ExecStart=/usr/bin/python3 /home/ben/bots/memes/example.py
+
+[Install]
+WantedBy=multi-user.target

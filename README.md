@@ -2,10 +2,20 @@
 
 [![](https://badge.fury.io/py/memeoverflow.svg)](https://badge.fury.io/py/memeoverflow)
 
+A simple framework for Twitter bots creating memes from Stack Exchange
+questions.
+
 Take questions posted on a particular Stack Exchange site, generate a meme out
 of them and tweet them.
 
 ![](fry.jpg)
+
+Uses the following APIs:
+
+- [Stack Exchange](https://api.stackexchange.com/)
+- [Twitter](https://developer.twitter.com/en/docs/api-reference-index) (via
+[Twython](https://twython.readthedocs.io/en/latest/))
+- [imgflip](https://api.imgflip.com/)
 
 ## Instances
 
@@ -16,6 +26,11 @@ of them and tweet them.
 
 ## Run your own instance
 
+You can run your own instance of a Twitter bot following a particular Stack
+Exchange site. You need to register for API keys for the relevant services.
+
+### API keys
+
 1. Sign up for a [Twitter](https://twitter.com/) account, [create an
 app](https://developer.twitter.com/en/apps) and get your four API keys.
 
@@ -23,6 +38,8 @@ app](https://developer.twitter.com/en/apps) and get your four API keys.
 and password.
 
 1. Register for a [Stack Exchange App Key](https://stackapps.com/apps/oauth/register)
+
+### Essential setup
 
 1. Install this project:
 
@@ -38,9 +55,76 @@ copy to specify:
     Exchange API key
     - your Twitter account's API keys
     - your imgflip's username and password
+    - the path to your meme database file (can be a non-existent file, as long as
+    the file location can be written to)
+    - Optionally, the path to your log file (can be a non-existent file, as long
+    as the file location can be written to)
 
-1. Run it:
+### log file (optional)
+
+If you want to log to a file, populate the `logfile` function call as provided
+in the `example.py` script.
+
+If the path to the provided log file is writeable by your user, you are ready to
+go. Here's an example of what you need to write logs to
+`/var/log/memeoverflow/`:
+
+1. Create the directory and chown it:
+
+    ```bash
+    sudo mkdir /var/log/memeoverflow
+    sudo chown ben: /var/log/memeoverflow
+    ```
+
+1. Set the logfile to e.g. `/var/log/memeoverflow/raspberrypi.log` in
+`raspberrypi.py`
+
+### Simple launch (option 1)
+
+1. Run it directly:
 
 ```bash
 python3 raspberrypi.py
 ```
+
+Log entries will be written to stdout (and optionally to a log file if
+specified). You'll have to keep the process active to keep it running, unless
+you background it with `&`. Alternatively, use systemd.
+
+### systemd launch (option 2)
+
+Alternatively, use systemd:
+
+1. Copy the example systemd service `memeoverflow-example.service` into `/etc/systemd/system/`:
+
+    ```bash
+    sudo cp memeoverflow example.service /etc/systemd/system/memeoverflow-raspberrypi.service
+    ```
+
+1. Edit the service (edit `Description` and path to file in `ExecStart`):
+
+    ```bash
+    sudo vim /etc/systemd/system/memeoverflow-raspberrypi.service
+    ```
+
+1. Reload systemctl daemon:
+
+    ```bash
+    sudo systemctl daemon-reload
+    ```
+
+1. Enable and start the service:
+
+    ```bash
+    sudo systemctl enable dummy.service
+    sudo systemctl start dummy.service
+    ```
+
+1. Check the status:
+
+    ```bash
+    sudo systemctl status dummy.service
+    ```
+
+If a log file is specified, log entries will be written there. They will also be
+visible in `systemctl status` which gives real evidence of it running correctly.
