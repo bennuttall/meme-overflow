@@ -3,15 +3,18 @@ import sqlite3
 
 class MemeDatabase:
     """
-    Meme database interface
+    Meme database interface (sqlite)
 
     :param str site:
         The name of the StackExchange site as an identifier (used as the table
         name)
+
+    :param str db_path:
+        Path to the sqlite database file
     """
-    def __init__(self, site):
+    def __init__(self, site, db_path):
         self.site = site
-        self.conn = sqlite3.connect('memes.db')
+        self.conn = sqlite3.connect(db_path)
         cursor = self.conn.cursor()
         cursor.execute(f"create table if not exists {site} (question_id int unique)")
         cursor.execute(f"create table if not exists memes (meme_id int unique, meme_name text, blacklisted bool, include_random bool)")

@@ -25,9 +25,12 @@ class MemeOverflow:
     :param dict stackexchange:
         Expects key: site (StackExchange site name)
         Optional key: key (StackExchange API key)
+
+    :param str db_path:
+        Path to the sqlite database file
     """
-    def __init__(self, twitter, imgflip, stackexchange):
-        self.db = MemeDatabase(stackexchange['site'])
+    def __init__(self, twitter, imgflip, stackexchange, db_path):
+        self.db = MemeDatabase(site=stackexchange['site'], db_path=db_path)
         self.twitter = Twython(
             twitter['con_key'],
             twitter['con_sec'],
@@ -93,8 +96,6 @@ class MemeOverflow:
         url = 'https://api.imgflip.com/caption_image'
         text0 = text
         text1 = None
-        print(text)
-        print(self.db.select_random_meme())
 
         if text.lower().startswith("is this "):
             meme_id = IS_THIS
