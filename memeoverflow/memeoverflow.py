@@ -1,5 +1,5 @@
 from .db import MemeDatabase
-from .memes import *
+from .imgflip import MEMES
 
 import random
 from time import sleep
@@ -52,7 +52,6 @@ class MemeOverflow:
         - add to database
         """
         while True:
-            self.update_meme_database()
             questions = self.get_se_questions(100)
             for q in questions:
                 question = html.unescape(q['title'])
@@ -61,10 +60,10 @@ class MemeOverflow:
                 if self.db.question_is_known(question_id):
                     continue
                 status = f'{question} {question_url}'
-                img_url, meme_id = self.make_meme(question)
+                img_url, meme = self.make_meme(question)
                 try:
                     self.tweet(status, img_url)
-                    logger.info(f'Tweeted: {question} [meme {meme_id}]')
+                    logger.info(f'Tweeted: {question} [{meme}]')
                 except TwythonError as e:
                     logger.error(f'{e.__class__.__name__}: {e}')
                     sleep(60)
@@ -72,19 +71,6 @@ class MemeOverflow:
                 self.db.insert_question(question_id)
                 sleep(60*5)
             sleep(60*5)
-
-    def update_meme_database(self):
-        """
-        Get list of memes from imgflip and add them to the database
-        """
-        url = 'https://api.imgflip.com/get_memes'
-        try:
-            r = requests.get(url)
-            memes = r.json()
-            memes = [(m['id'], m['name']) for m in memes['data']['memes']]
-            self.db.insert_memes(memes)
-        except Exception as e:
-            logger.error(f'{e.__class__.__name__}: {e}')
 
     def make_meme(self, text):
         """
@@ -98,31 +84,63 @@ class MemeOverflow:
         text1 = None
 
         if text.lower().startswith("is this "):
-            meme_id = IS_THIS
+            meme_id = 'IS_THIS_A_PIGEON'
             text0 = "is this"
             text1 = text[8:]
+        elif 'possible' in text.lower() and text.endswith('?'):
+            meme = 'WELL_YES_BUT_ACTUALLY_NO'
         elif text.count('"') == 2:
-            meme_id = DR_EVIL
+            meme = 'DR_EVIL_LASER'
         else:
-            meme_id = self.db.select_random_meme()
+            meme = random.choice(list(MEMES.keys()))
 
-        if meme_id == PETER_PARKER_CRY:
+        if meme in (
+            'IS_THIS_A_PIGEON', 'WELL_YES_BUT_ACTUALLY_NO', 'DR_EVIL_LASER'
+            ):
+            # try again
+            return self.make_meme(text)
+
+        elif meme == 'PETER_PARKER_CRY':
             text0 = None
             text1 = text
-        elif meme_id == KERMIT_BUSINESS:
+        elif meme == 'BUT_THATS_NONE_OF_MY_BUSINESS':
             if text.endswith('?'):
-                # try again
                 return self.make_meme(text)
             text0 = text
             text1 = "But that's none of my business"
-        elif meme_id == CHANGE_MY_MIND:
+        elif meme == 'CHANGE_MY_MIND':
             if text.endswith('?'):
-                # try again
                 return self.make_meme(text)
-        elif meme_id == PHILOSORAPTOR:
+        elif meme == 'PHILOSORAPTOR':
             if not text.endswith('?'):
-                # try again
                 return self.make_meme(text)
+        elif meme == 'BRACE_YOURSELVES_X_IS_COMING':
+            text0 = "Brace yourselves"
+            text1 = text
+        elif meme == 'ANCIENT_ALIENS':
+            if text.endswith('?'):
+                return self.make_meme(text)
+            text1 = "Therefore aliens"
+        elif meme in ('ILL_JUST_WAIT_HERE', 'WAITING_SKELETON'):
+            text1 = "I'll just wait here"
+        elif meme == 'SAY_THAT_AGAIN_I_DARE_YOU':
+            text1 = "Say that again I dare you"
+        elif meme == 'GRUMPY_CAT':
+            text1 = "No"
+        elif meme == 'THAT_WOULD_BE_GREAT':
+            text1 = "That would be great"
+        elif meme == 'AAAAAND_ITS_GONE':
+            text1 = "Aaaaand it's gone"
+        elif meme == 'AND_EVERYBODY_LOSES_THEIR_MINDS':
+            text1 = "Everyone loses their minds"
+        elif meme == 'SEE_NOBODY_CARES':
+            text1 = "See! Nobody cares"
+        elif meme == 'STAR_WARS_NO':
+            text1 = "Noooooooo"
+        elif meme == 'MUGATU_SO_HOT_RIGHT_NOW':
+            text1 = "So hot right now"
+
+        meme_id = MEMES[meme]
 
         data = {
             'username': self.imgflip['user'],
@@ -133,23 +151,15 @@ class MemeOverflow:
         }
         try:
             r = requests.post(url, data=data)
-            try:
-                img_url = r.json()['data']['url']
-                return (img_url, meme_id)
-            except KeyError:
-                # blacklist the meme and try another one
-                self.db.blacklist_meme(meme_id)
-                logger.warn(f'Blacklisted meme {meme_id}, trying again')
-                return self.make_meme(text)
+            img_url = r.json()['data']['url']
+            return (img_url, meme)
         except Exception as e:
             logger.error(f'{e.__class__.__name__}: {e}')
             sleep(30)
             return self.make_meme(text)
 
     def get_se_questions(self, n=1):
-        """
-        Retreive n questions from the StackExchange site
-        """
+        "Retreive n questions from the StackExchange site"
         url = 'https://api.stackexchange.com/2.2/questions'
         params = {
             'pagesize': n,
@@ -164,9 +174,7 @@ class MemeOverflow:
             return []
 
     def tweet(self, status, img_url):
-        """
-        Tweet status with the image attached
-        """
+        "Tweet status with the image attached"
         try:
             r = requests.get(img_url)
             img = BytesIO(r.content)

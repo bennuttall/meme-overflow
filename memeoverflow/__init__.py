@@ -4,7 +4,7 @@ from .memeoverflow import MemeOverflow, MemeDatabase
 
 
 __project__ = 'memeoverflow'
-__version__ = '0.4.0'
+__version__ = '0.5.0'
 __author__ = 'Ben Nuttall'
 __author_email__ = 'ben@bennuttall.com'
 __url__ = 'https://github.com/bennuttall/meme-overflow'
