@@ -1,4 +1,7 @@
 from memeoverflow import MemeOverflow
+from logzero import logfile
+
+logfile('/var/log/memeoverflow/example.log')  # optional
 
 stackexchange = {
     'site': '',
