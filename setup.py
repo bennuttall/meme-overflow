@@ -1,38 +1,38 @@
+"Setup script for the memeoverflow package"
+
 import os
+import sys
+import io
 from setuptools import setup, find_packages
 
+HERE = os.path.abspath(os.path.dirname(__file__))
 
-def read(fname):
-    return open(os.path.join(os.path.dirname(__file__), fname)).read()
+if not sys.version_info >= (3, 6):
+    raise RuntimeError('This application requires Python 3.6 or later')
 
-setup(
-    name="memeoverflow",
-    version="0.3.2",
-    author="Ben Nuttall",
-    description="Take questions posted on a particular Stack Exchange site, generate a meme out of it and tweet it",
-    license="OSI Approved :: BSD License",
-    keywords=[
-        'stackexchange',
-        'stackoverflow',
-        'meme',
-        'twitter',
-    ],
-    url="https://github.com/bennuttall/meme-overflow",
-    packages=find_packages(),
-    requires=[
-        'requests',
-        'twython',
-        'logzero',
-    ],
-    long_description=read('description.rst'),
-    classifiers=[
-        "Development Status :: 4 - Beta",
-        "License :: OSI Approved :: BSD License",
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3 :: Only",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
-        "Topic :: Games/Entertainment",
-    ]
-)
+
+def main():
+    "Executes setup when this script is the top-level"
+    import memeoverflow as app
+
+    with io.open(os.path.join(HERE, 'description.rst'), 'r') as description:
+        setup(
+            name=app.__project__,
+            version=app.__version__,
+            author=app.__author__,
+            author_email=app.__author_email__,
+            url=app.__url__,
+            platforms=app.__platforms__,
+            requires=app.__requires__,
+            python_requires=app.__python_requires__,
+            keywords=app.__keywords__,
+            classifiers=app.__classifiers__,
+            install_requires=app.__requires__,
+            description=app.__doc__,
+            long_description=description.read(),
+            packages=find_packages(),
+        )
+
+
+if __name__ == '__main__':
+    main()
