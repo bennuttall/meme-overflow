@@ -116,14 +116,14 @@ Alternatively, use systemd:
 1. Enable and start the service:
 
     ```bash
-    sudo systemctl enable dummy.service
-    sudo systemctl start dummy.service
+    sudo systemctl enable memeoverflow-raspberrypi.service
+    sudo systemctl start memeoverflow-raspberrypi.service
     ```
 
 1. Check the status:
 
     ```bash
-    sudo systemctl status dummy.service
+    sudo systemctl status memeoverflow-raspberrypi.service
     ```
 
 If a log file is specified, log entries will be written there. They will also be
