@@ -13,6 +13,10 @@ class MemeDatabase:
         Path to the sqlite database file
     """
     def __init__(self, site, db_path):
+        if str(site) == '':
+            raise TypeError('site must be a string')
+        if str(db_path) == '':
+            raise TypeError('db_path must be a string')
         self.site = site
         self.conn = sqlite3.connect(db_path)
         cursor = self.conn.cursor()
@@ -21,6 +25,12 @@ class MemeDatabase:
 
     def __repr__(self):
         return f"<MemeDatabase object for site {self.site}>"
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        pass
 
     def insert_question(self, id):
         "Insert a question ID"
