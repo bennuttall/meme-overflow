@@ -1,12 +1,15 @@
 from .db import MemeDatabase
 from .imgflip import MEMES
+from .exc import StackExchangeNoKeyWarning
 
 import random
 from time import sleep
 from io import BytesIO
 import html
+import warnings
 
 import requests
+from requests.exceptions import RequestException
 from twython import Twython, TwythonError
 from logzero import logger
 
@@ -14,24 +17,35 @@ from logzero import logger
 imgflip_url = 'https://api.imgflip.com/caption_image'
 stack_url = 'https://api.stackexchange.com/2.2/questions'
 
-def validate_keys(name, d, keys):
+
+def _validate_keys(name, d, keys):
+    """
+    Assert that all keys exist in d, and that they are non-empty strings.
+    If any invalid keys found, raise TypeError.
+    """
     try:
         for key in keys:
-            d[key]
+            assert isinstance(d[key], str)
+            assert len(d[key]) > 0
     except TypeError:
         raise TypeError(f'{name} is not a dict')
     except KeyError:
         raise TypeError(
             f"Missing dict keys for {name}. Expecting: {', '.join(keys)}"
         )
+    except AssertionError:
+        raise TypeError(f'Invalid key values for {name}. Keys must be non-empty strings.')
+    return True
 
-def validate_api_keys(twitter, imgflip, stackexchange):
+def _validate_api_keys(twitter, imgflip, stackexchange):
+    "Check all API keys are in valid format, otherwise raise TypeError."
     twitter_keys = ('con_key', 'con_sec', 'acc_tok', 'acc_sec')
-    validate_keys('Twitter', twitter, twitter_keys)
+    _validate_keys('Twitter', twitter, twitter_keys)
     imgflip_keys = ('user', 'pass')
-    validate_keys('imgflip', imgflip, imgflip_keys)
+    _validate_keys('imgflip', imgflip, imgflip_keys)
     stackexchange_keys = ('site', )
-    validate_keys('Stack Exchange', stackexchange, stackexchange_keys)
+    _validate_keys('Stack Exchange', stackexchange, stackexchange_keys)
+    return True
 
 
 class MemeOverflow:
@@ -53,7 +67,7 @@ class MemeOverflow:
         Path to the sqlite database file
     """
     def __init__(self, twitter, imgflip, stackexchange, db_path):
-        validate_api_keys(twitter, imgflip, stackexchange)
+        _validate_api_keys(twitter, imgflip, stackexchange)
 
         self.twitter = Twython(
             twitter['con_key'],
@@ -64,6 +78,12 @@ class MemeOverflow:
         self.imgflip = imgflip
         self.stackexchange = stackexchange
         self.db = MemeDatabase(site=stackexchange['site'], db_path=db_path)
+
+        if 'key' not in self.stackexchange:
+            warnings.warn(
+                'No StackExchange API key provided, limited use may apply',
+                StackExchangeNoKeyWarning,
+            )
 
     def __repr__(self):
         return f"<MemeOverflow object for site {self.stackexchange['site']}>"
@@ -96,7 +116,6 @@ class MemeOverflow:
                     self.tweet(status, img_url)
                     logger.info(f'Tweeted: {question} [{meme}]')
                 except TwythonError as e:
-                    logger.error(f'{e.__class__.__name__}: {e}')
                     sleep(60)
                     continue
                 self.db.insert_question(question_id)
@@ -113,7 +132,7 @@ class MemeOverflow:
         try:
             r = requests.get(stack_url, params)
             return r.json()['items']
-        except Exception as e:
+        except (KeyError, RequestException) as e:
             logger.error(f'{e.__class__.__name__}: {e}')
             return []
 
@@ -138,12 +157,17 @@ class MemeOverflow:
             meme = 'WELL_YES_BUT_ACTUALLY_NO'
         elif text.count('"') == 2:
             meme = 'DR_EVIL_LASER'
+        elif text.lower().startswith('if') and text.endswith('?'):
+            meme = 'PHILOSORAPTOR'
         else:
             meme = random.choice(list(MEMES.keys()))
 
             if meme in (
-                'IS_THIS_A_PIGEON', 'WELL_YES_BUT_ACTUALLY_NO', 'DR_EVIL_LASER'
-                ):
+                'IS_THIS_A_PIGEON',
+                'WELL_YES_BUT_ACTUALLY_NO',
+                'DR_EVIL_LASER',
+                'PHILOSORAPTOR',
+            ):
                 # try again
                 return self.choose_meme_template(text)
 
@@ -157,9 +181,6 @@ class MemeOverflow:
                 text1 = "But that's none of my business"
             elif meme == 'CHANGE_MY_MIND':
                 if text.endswith('?'):
-                    return self.choose_meme_template(text)
-            elif meme == 'PHILOSORAPTOR':
-                if not text.endswith('?'):
                     return self.choose_meme_template(text)
             elif meme == 'BRACE_YOURSELVES_X_IS_COMING':
                 text0 = "Brace yourselves"
@@ -211,7 +232,7 @@ class MemeOverflow:
             r = requests.post(imgflip_url, data=data)
             img_url = r.json()['data']['url']
             return (img_url, meme)
-        except Exception as e:
+        except (KeyError, RequestException) as e:
             logger.error(f'{e.__class__.__name__}: {e}')
             sleep(30)
             return self.choose_meme_template(text)
@@ -224,5 +245,6 @@ class MemeOverflow:
             response = self.twitter.upload_media(media=img)
             media_ids = [response['media_id']]
             self.twitter.update_status(status=status, media_ids=media_ids)
-        except Exception as e:
+        except (RequestException, TwythonError) as e:
             logger.error(f'{e.__class__.__name__}: {e}')
+            raise
