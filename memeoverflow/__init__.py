@@ -5,7 +5,7 @@ from .exc import StackExchangeNoKeyWarning
 
 
 __project__ = 'memeoverflow'
-__version__ = '0.5.0'
+__version__ = '0.6.0'
 __author__ = 'Ben Nuttall'
 __author_email__ = 'ben@bennuttall.com'
 __url__ = 'https://github.com/bennuttall/meme-overflow'
@@ -15,6 +15,9 @@ __requires__ = [
     'twython',
     'logzero',
 ]
+__extra_requires__ = {
+    'test':  ['pytest', 'coverage', 'mock'],
+}
 __python_requires__ = '>=3.6'
 __keywords__ = [
     'twitter',

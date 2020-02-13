@@ -28,6 +28,7 @@ def main():
             keywords=app.__keywords__,
             classifiers=app.__classifiers__,
             install_requires=app.__requires__,
+            extra_requires=app.__extra_requires__,
             description=app.__doc__,
             long_description=description.read(),
             packages=find_packages(),
