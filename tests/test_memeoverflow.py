@@ -362,3 +362,36 @@ def test_mo_tweet_fail_update_status(twython_class, requests, logger):
             mo.tweet('test', example_imgflip_img_url)
         logger.error.assert_called_once()
     teardown_db(test_db)
+
+@patch('memeoverflow.memeoverflow.logger')
+@patch('memeoverflow.memeoverflow.random')
+@patch('memeoverflow.memeoverflow.requests')
+@patch('memeoverflow.memeoverflow.BytesIO')
+@patch('memeoverflow.memeoverflow.Twython')
+def test_main(twython_class, bytesio_class, requests, random, logger):
+    n = 2
+    data = {
+        'pagesize': n,
+        'site': fake_stack_with_key['site'],
+        'key': fake_stack_with_key['key'],
+    }
+
+    twython = Mock()
+    twython_class.return_value = twython
+    teardown_db(test_db)
+    with MemeOverflow(fake_twitter, fake_imgflip, fake_stack_with_key, test_db) as mo:
+        mock_se_response = Mock(json=Mock(return_value=example_se_response))
+        requests.get.return_value = mock_se_response
+        meme = 'BATMAN_SLAPPING_ROBIN'
+        random.choice.return_value = meme
+        mock_imgflip_response = Mock(content=example_imgflip_img_blob)
+        requests.get.return_value = mock_imgflip_response
+        img_bytes = Mock()
+        bytesio_class.return_value = img_bytes
+        twython.upload_media.return_value = example_twitter_upload_response
+        mo.main(example_question)
+        question_title = example_question['title']
+        log_msg = f'Tweeted: {question_title} [{meme}]'
+        logger.info.assert_called_once_with(log_msg)
+        assert mo.db.question_is_known(example_question['question_id'])
+    teardown_db(test_db)

@@ -13,10 +13,10 @@ class MemeDatabase:
         Path to the sqlite database file
     """
     def __init__(self, site, db_path):
-        if str(site) == '':
-            raise TypeError('site must be a string')
-        if str(db_path) == '':
-            raise TypeError('db_path must be a string')
+        if not isinstance(site, str) or len(site) == 0:
+            raise TypeError('site must be a non-empty string')
+        if not isinstance(db_path, str) or len(db_path) == 0:
+            raise TypeError('db_path must be a non-empty string')
         self.site = site
         self.conn = sqlite3.connect(db_path)
         cursor = self.conn.cursor()

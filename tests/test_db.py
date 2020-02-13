@@ -17,7 +17,13 @@ def test_database_bad_connect():
     with pytest.raises(TypeError):
         MemeDatabase()
     with pytest.raises(TypeError):
-        MemeDatabase('foo')
+        MemeDatabase(None, 'foo')
+    with pytest.raises(TypeError):
+        MemeDatabase(123, 'foo')
+    with pytest.raises(TypeError):
+        MemeDatabase('', 'foo')
+    with pytest.raises(TypeError):
+        MemeDatabase('foo',)
     with pytest.raises(TypeError):
         MemeDatabase('foo', None)
     with pytest.raises(TypeError):

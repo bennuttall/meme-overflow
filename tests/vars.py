@@ -52,6 +52,12 @@ example_twitter_upload_response = {
     'media_id': '1234567890',
 }
 
+example_question = {
+    'title': 'question_title',
+    'link': 'question_url',
+    'question_id': 12345,
+}
+
 stack_url = 'https://api.stackexchange.com/2.2/questions'
 imgflip_url = 'https://api.imgflip.com/caption_image'
 

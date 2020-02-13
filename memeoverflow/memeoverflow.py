@@ -103,26 +103,13 @@ class MemeOverflow:
         - add to database
         """
         while True:
-            questions = self.get_se_questions(100)
+            questions = self.get_se_questions()
             for q in questions:
-                question = html.unescape(q['title'])
-                question_url = q['link']
-                question_id = q['question_id']
-                if self.db.question_is_known(question_id):
-                    continue
-                status = f'{question} {question_url}'
-                img_url, meme = self.make_meme(question)
-                try:
-                    self.tweet(status, img_url)
-                    logger.info(f'Tweeted: {question} [{meme}]')
-                except TwythonError as e:
-                    sleep(60)
-                    continue
-                self.db.insert_question(question_id)
+                self.main(q)
                 sleep(60*5)
             sleep(60*5)
 
-    def get_se_questions(self, n=1):
+    def get_se_questions(self, n=100):
         "Retreive n questions from the StackExchange site and return as a list"
         params = {
             'pagesize': n,
@@ -248,3 +235,20 @@ class MemeOverflow:
         except (RequestException, TwythonError) as e:
             logger.error(f'{e.__class__.__name__}: {e}')
             raise
+
+    def main(self, question):
+        "Main"
+        question_title = html.unescape(question['title'])
+        question_url = question['link']
+        question_id = question['question_id']
+        if self.db.question_is_known(question_id):
+            return
+        status = f'{question_title} {question_url}'
+        img_url, meme = self.make_meme(question_title)
+        try:
+            self.tweet(status, img_url)
+            logger.info(f'Tweeted: {question_title} [{meme}]')
+        except TwythonError:
+            sleep(60)
+            return
+        self.db.insert_question(question_id)
