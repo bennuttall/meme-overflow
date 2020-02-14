@@ -9,6 +9,8 @@ TWINE=twine
 PYFLAGS=
 DEST_DIR=/
 
+NAME:=$(shell $(PYTHON) $(PYFLAGS) setup.py --name)
+VER:=$(shell $(PYTHON) $(PYFLAGS) setup.py --version)
 PYVER:=$(shell $(PYTHON) $(PYFLAGS) -c "import sys; print('py%d.%d' % sys.version_info[:2])")
 
 # Calculate the name of all outputs
