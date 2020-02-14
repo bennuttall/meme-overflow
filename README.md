@@ -1,6 +1,7 @@
 # Meme Overflow
 
 [![](https://badge.fury.io/py/memeoverflow.svg)](https://badge.fury.io/py/memeoverflow)
+[![](https://api.travis-ci.org/bennuttall/meme-overflow.svg?branch=master)](https://travis-ci.org/bennuttall/meme-overflow)
 
 A simple framework for Twitter bots creating memes from Stack Exchange
 questions.
