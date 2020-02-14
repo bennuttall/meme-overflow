@@ -64,7 +64,7 @@ def main():
             keywords=__keywords__,
             classifiers=__classifiers__,
             install_requires=__requires__,
-            extra_requires=__extra_requires__,
+            extras_require=__extra_requires__,
             description=__doc__,
             long_description=description.read(),
             packages=find_packages(),

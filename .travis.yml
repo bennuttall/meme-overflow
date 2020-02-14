@@ -6,5 +6,5 @@ python:
     - "3.8"
 install: "pip install -e .[test]"
 script: make test
-after_success:
-    - codecov
+before_install: "pip install codecov"
+after_success: "codecov"
