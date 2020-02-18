@@ -25,6 +25,7 @@ Uses the following APIs:
 - [@overflow_meme](https://twitter.com/overflow_meme) (Stack Overflow)
 - [@worldbuildingme](https://twitter.com/worldbuildingme) (World Building)
 - [@askubuntumemes](https://twitter.com/askubuntumemes) (Ask Ubuntu)
+- [@stackamemia](https://twitter.com/stackamemia) (Academia)
 
 ## Run your own instance
 
