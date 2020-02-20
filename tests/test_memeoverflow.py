@@ -418,3 +418,20 @@ def test_generate_meme_and_tweet(twython_class, bytesio_class, requests, random,
         logger.info.assert_called_once_with(log_msg)
         assert mo.db.question_is_known(example_question['question_id'])
     teardown_db(test_db)
+
+def test_generate_meme_and_tweet_known_question():
+    teardown_db(test_db)
+    with MemeOverflow(fake_twitter, fake_imgflip, fake_stack_with_key, test_db) as mo:
+        mo.db.insert_question(example_question['question_id'])
+        assert not mo.generate_meme_and_tweet(example_question)
+    teardown_db(test_db)
+
+@patch('memeoverflow.memeoverflow.sleep')
+def test_generate_meme_and_tweet_fail(sleep):
+    teardown_db(test_db)
+    with MemeOverflow(fake_twitter, fake_imgflip, fake_stack_with_key, test_db) as mo:
+        mo.make_meme = Mock(return_value=('img_url', 'meme'))
+        mo.tweet = Mock(side_effect=TwythonError('error'))
+        assert not mo.generate_meme_and_tweet(example_question)
+        assert not mo.db.question_is_known(example_question['question_id'])
+    teardown_db(test_db)
