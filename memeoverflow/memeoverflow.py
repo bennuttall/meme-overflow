@@ -222,7 +222,7 @@ class MemeOverflow:
         except (KeyError, RequestException) as e:
             logger.error(f'{e.__class__.__name__}: {e}')
             sleep(30)
-            return self.choose_meme_template(text)
+            return self.make_meme(text)
 
     def tweet(self, status, img_url):
         "Tweet status with the image attached"

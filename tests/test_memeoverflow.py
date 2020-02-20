@@ -286,15 +286,38 @@ def test_mo_make_meme_fail_retry(requests, random, sleep, logger):
     teardown_db(test_db)
     with MemeOverflow(fake_twitter, fake_imgflip, fake_stack_with_key, test_db) as mo:
         random.choice.return_value = 'BATMAN_SLAPPING_ROBIN'
-        requests.post.side_effect = RequestException()
-        mo.make_meme('test')
-        requests.post.assert_called_once_with(imgflip_url, data=data)
-        logger.error.assert_called_once()
-
-        mock_response = Mock(json=Mock(return_value=example_imgflip_response))
-        requests.post.side_effect = None
-        requests.post.return_value = mock_response
+        mock_good_response = Mock(json=Mock(return_value=example_imgflip_response))
+        requests.post.side_effect = [RequestException(), mock_good_response]
         img_url, meme_name = mo.make_meme('test')
+
+        requests.post.assert_called_with(imgflip_url, data=data)
+        logger.error.assert_called_once()
+        assert img_url == example_imgflip_img_url
+        assert meme_name == 'BATMAN_SLAPPING_ROBIN'
+    teardown_db(test_db)
+
+@patch('memeoverflow.memeoverflow.logger')
+@patch('memeoverflow.memeoverflow.sleep')
+@patch('memeoverflow.memeoverflow.random')
+@patch('memeoverflow.memeoverflow.requests')
+def test_mo_make_meme_bad_response_retry(requests, random, sleep, logger):
+    data = {
+        'username': 'imgflip_user',
+        'password': 'imgflip_pass',
+        'template_id': BATMAN_SLAPPING_ROBIN,
+        'text0': 'test',
+        'text1': None,
+    }
+
+    teardown_db(test_db)
+    with MemeOverflow(fake_twitter, fake_imgflip, fake_stack_with_key, test_db) as mo:
+        random.choice.return_value = 'BATMAN_SLAPPING_ROBIN'
+        mock_bad_response = Mock(json=Mock(return_value=empty_dict))
+        mock_good_response = Mock(json=Mock(return_value=example_imgflip_response))
+        requests.post.side_effect = [mock_bad_response, mock_good_response]
+        img_url, meme_name = mo.make_meme('test')
+        requests.post.assert_called_with(imgflip_url, data=data)
+        logger.error.assert_called_once()
         assert img_url == example_imgflip_img_url
         assert meme_name == 'BATMAN_SLAPPING_ROBIN'
     teardown_db(test_db)
