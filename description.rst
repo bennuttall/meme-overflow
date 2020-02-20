@@ -30,11 +30,13 @@ Instances
 * `@overflow_meme`_ (Stack Overflow)
 * `@worldbuildingme`_ (World Building)
 * `@askubuntumemes`_ (Ask Ubuntu)
+* `@stackamemia`_ (Academia)
 
 .. _@pi_stack: https://twitter.com/pi_stack
 .. _@overflow_meme: https://twitter.com/overflow_meme
 .. _@worldbuildingme: https://twitter.com/worldbuildingme
 .. _@askubuntumemes: https://twitter.com/askubuntumemes
+.. _@stackamemia: https://twitter.com/stackamemia
 
 Run your own instance. See `GitHub`_ for more info.
 
