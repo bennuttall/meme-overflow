@@ -93,7 +93,7 @@ def test_validate_api_keys_pass():
     assert _validate_api_keys(fake_twitter, fake_imgflip, fake_stack_no_key)
     assert _validate_api_keys(fake_twitter, fake_imgflip, fake_stack_with_key)
 
-def test_mo_bad_init():
+def test_bad_init():
     teardown_db(test_db)
     with pytest.raises(TypeError):
         MemeOverflow()
@@ -109,7 +109,7 @@ def test_mo_bad_init():
         MemeOverflow(fake_twitter, fake_imgflip, fake_stack_with_key)
     teardown_db(test_db)
 
-def test_mo_init():
+def test_init():
     with MemeOverflow(fake_twitter, fake_imgflip, fake_stack_with_key, test_db) as mo:
         assert repr(mo).startswith('<MemeOverflow')
         assert repr(mo).endswith('site stackexchange>')
@@ -118,7 +118,7 @@ def test_mo_init():
     teardown_db(test_db)
 
 @patch('memeoverflow.memeoverflow.requests')
-def test_mo_get_se_questions_no_key(requests):
+def test_get_se_questions_no_key(requests):
     n = 2
     data = {
         'pagesize': n,
@@ -139,7 +139,7 @@ def test_mo_get_se_questions_no_key(requests):
     teardown_db(test_db)
 
 @patch('memeoverflow.memeoverflow.requests')
-def test_mo_get_se_questions_with_key(requests):
+def test_get_se_questions_with_key(requests):
     n = 2
     data = {
         'pagesize': n,
@@ -158,7 +158,7 @@ def test_mo_get_se_questions_with_key(requests):
 
 @patch('memeoverflow.memeoverflow.logger')
 @patch('memeoverflow.memeoverflow.requests')
-def test_mo_get_se_questions_fail_request(requests, logger):
+def test_get_se_questions_fail_request(requests, logger):
     n = 2
     data = {
         'pagesize': n,
@@ -177,7 +177,7 @@ def test_mo_get_se_questions_fail_request(requests, logger):
 
 @patch('memeoverflow.memeoverflow.logger')
 @patch('memeoverflow.memeoverflow.requests')
-def test_mo_get_se_questions_fail_bad_json(requests, logger):
+def test_get_se_questions_fail_bad_json(requests, logger):
     n = 2
     data = {
         'pagesize': n,
@@ -196,7 +196,7 @@ def test_mo_get_se_questions_fail_bad_json(requests, logger):
     teardown_db(test_db)
 
 @patch('memeoverflow.memeoverflow.random')
-def test_mo_choose_meme_template(random):
+def test_choose_meme_template(random):
     teardown_db(test_db)
     with MemeOverflow(fake_twitter, fake_imgflip, fake_stack_with_key, test_db) as mo:
         # text should be on line 2 for this template
@@ -250,7 +250,7 @@ def test_mo_choose_meme_template(random):
 
 @patch('memeoverflow.memeoverflow.random')
 @patch('memeoverflow.memeoverflow.requests')
-def test_mo_make_meme(requests, random):
+def test_make_meme(requests, random):
     data = {
         'username': 'imgflip_user',
         'password': 'imgflip_pass',
@@ -274,7 +274,7 @@ def test_mo_make_meme(requests, random):
 @patch('memeoverflow.memeoverflow.sleep')
 @patch('memeoverflow.memeoverflow.random')
 @patch('memeoverflow.memeoverflow.requests')
-def test_mo_make_meme_fail_retry(requests, random, sleep, logger):
+def test_make_meme_fail_retry(requests, random, sleep, logger):
     data = {
         'username': 'imgflip_user',
         'password': 'imgflip_pass',
@@ -300,7 +300,7 @@ def test_mo_make_meme_fail_retry(requests, random, sleep, logger):
 @patch('memeoverflow.memeoverflow.sleep')
 @patch('memeoverflow.memeoverflow.random')
 @patch('memeoverflow.memeoverflow.requests')
-def test_mo_make_meme_bad_response_retry(requests, random, sleep, logger):
+def test_make_meme_bad_response_retry(requests, random, sleep, logger):
     data = {
         'username': 'imgflip_user',
         'password': 'imgflip_pass',
@@ -325,7 +325,7 @@ def test_mo_make_meme_bad_response_retry(requests, random, sleep, logger):
 @patch('memeoverflow.memeoverflow.requests')
 @patch('memeoverflow.memeoverflow.Twython')
 @patch('memeoverflow.memeoverflow.BytesIO')
-def test_mo_tweet(bytesio_class, twython_class, requests):
+def test_tweet(bytesio_class, twython_class, requests):
     twython = Mock()
     twython_class.return_value = twython
     teardown_db(test_db)
@@ -344,7 +344,7 @@ def test_mo_tweet(bytesio_class, twython_class, requests):
 
 @patch('memeoverflow.memeoverflow.logger')
 @patch('memeoverflow.memeoverflow.requests')
-def test_mo_tweet_fail_imgflip(requests, logger):
+def test_tweet_fail_imgflip(requests, logger):
     teardown_db(test_db)
     with MemeOverflow(fake_twitter, fake_imgflip, fake_stack_with_key, test_db) as mo:
         requests.get.side_effect = RequestException()
@@ -356,7 +356,7 @@ def test_mo_tweet_fail_imgflip(requests, logger):
 @patch('memeoverflow.memeoverflow.logger')
 @patch('memeoverflow.memeoverflow.requests')
 @patch('memeoverflow.memeoverflow.Twython')
-def test_mo_tweet_fail_upload(twython_class, requests, logger):
+def test_tweet_fail_upload(twython_class, requests, logger):
     twython = Mock()
     twython_class.return_value = twython
     teardown_db(test_db)
@@ -372,7 +372,7 @@ def test_mo_tweet_fail_upload(twython_class, requests, logger):
 @patch('memeoverflow.memeoverflow.logger')
 @patch('memeoverflow.memeoverflow.requests')
 @patch('memeoverflow.memeoverflow.Twython')
-def test_mo_tweet_fail_update_status(twython_class, requests, logger):
+def test_tweet_fail_update_status(twython_class, requests, logger):
     twython = Mock()
     twython_class.return_value = twython
     teardown_db(test_db)
@@ -391,7 +391,7 @@ def test_mo_tweet_fail_update_status(twython_class, requests, logger):
 @patch('memeoverflow.memeoverflow.requests')
 @patch('memeoverflow.memeoverflow.BytesIO')
 @patch('memeoverflow.memeoverflow.Twython')
-def test_main(twython_class, bytesio_class, requests, random, logger):
+def test_generate_meme_and_tweet(twython_class, bytesio_class, requests, random, logger):
     n = 2
     data = {
         'pagesize': n,
@@ -412,7 +412,7 @@ def test_main(twython_class, bytesio_class, requests, random, logger):
         img_bytes = Mock()
         bytesio_class.return_value = img_bytes
         twython.upload_media.return_value = example_twitter_upload_response
-        mo.main(example_question)
+        assert mo.generate_meme_and_tweet(example_question)
         question_title = example_question['title']
         log_msg = f'Tweeted: {question_title} [{meme}]'
         logger.info.assert_called_once_with(log_msg)

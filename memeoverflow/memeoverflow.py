@@ -95,18 +95,12 @@ class MemeOverflow:
         pass
 
     def __call__(self):
-        """
-        Main loop: look up questions, for each question:
-        - check database
-        - generate meme
-        - tweet it
-        - add to database
-        """
         while True:
             questions = self.get_se_questions()
             for q in questions:
-                self.main(q)
-                sleep(60*5)
+                tweeted = self.generate_meme_and_tweet(q)
+                if tweeted:
+                    sleep(60*5)
             sleep(60*5)
 
     def get_se_questions(self, n=100):
@@ -236,13 +230,19 @@ class MemeOverflow:
             logger.error(f'{e.__class__.__name__}: {e}')
             raise
 
-    def main(self, question):
-        "Main"
+    def generate_meme_and_tweet(self, question):
+        """
+        For the given question, if it's not known:
+        - generate meme
+        - tweet it
+        - add to database
+        Return True on success, False on fail or question was known
+        """
         question_title = html.unescape(question['title'])
         question_url = question['link']
         question_id = question['question_id']
         if self.db.question_is_known(question_id):
-            return
+            return False
         status = f'{question_title} {question_url}'
         img_url, meme = self.make_meme(question_title)
         try:
@@ -250,5 +250,6 @@ class MemeOverflow:
             logger.info(f'Tweeted: {question_title} [{meme}]')
         except TwythonError:
             sleep(60)
-            return
+            return False
         self.db.insert_question(question_id)
+        return True
