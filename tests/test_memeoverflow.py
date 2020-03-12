@@ -432,19 +432,10 @@ def test_tweet_fail_update_status(twython_class, requests, logger):
 @patch('memeoverflow.memeoverflow.BytesIO')
 @patch('memeoverflow.memeoverflow.Twython')
 def test_generate_meme_and_tweet(twython_class, bytesio_class, requests, random, logger):
-    n = 2
-    data = {
-        'pagesize': n,
-        'site': fake_stack_with_key['site'],
-        'key': fake_stack_with_key['key'],
-    }
-
     twython = Mock()
     twython_class.return_value = twython
     teardown_db(test_db)
     with MemeOverflow(fake_twitter, fake_imgflip, fake_stack_with_key, test_db) as mo:
-        mock_se_response = Mock(json=Mock(return_value=example_se_response))
-        requests.get.return_value = mock_se_response
         meme = 'BATMAN_SLAPPING_ROBIN'
         random.choice.return_value = meme
         mock_imgflip_response = Mock(content=example_imgflip_img_blob)

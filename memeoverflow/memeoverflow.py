@@ -261,7 +261,11 @@ class MemeOverflow:
         question_id = question['question_id']
         if self.db.question_is_known(question_id):
             return False
-        status = f'{question_title} {question_url}'
+        tags = ' '.join(f'#{tag}' for tag in question['tags'])
+        status = f'{question_title} {question_url} {tags}'
+        print(len(status))
+        if len(status) > 240:
+            status = f'{question_title} {question_url}'
         img_url, meme = self.make_meme(question_title)
         try:
             self.tweet(status, img_url)

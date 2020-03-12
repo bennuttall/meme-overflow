@@ -61,6 +61,7 @@ example_question = {
     'title': 'question_title',
     'link': 'question_url',
     'question_id': 12345,
+    'tags': ['foo', 'bar', 'foobar'],
 }
 
 stack_url = 'https://api.stackexchange.com/2.2/questions'
