@@ -92,6 +92,7 @@ def test_validate_api_keys_fail():
 def test_validate_api_keys_pass():
     assert _validate_api_keys(fake_twitter, fake_imgflip, fake_stack_no_key)
     assert _validate_api_keys(fake_twitter, fake_imgflip, fake_stack_with_key)
+    assert _validate_api_keys(fake_twitter, fake_imgflip, fake_stack_with_key_and_userid)
 
 def test_bad_init():
     teardown_db(test_db)
@@ -107,6 +108,8 @@ def test_bad_init():
         MemeOverflow(fake_twitter, fake_imgflip)
     with pytest.raises(TypeError):
         MemeOverflow(fake_twitter, fake_imgflip, fake_stack_with_key)
+    with pytest.raises(TypeError):
+        MemeOverflow(fake_twitter, fake_imgflip, fake_stack_with_key_and_userid)
     teardown_db(test_db)
 
 def test_init():
@@ -156,6 +159,24 @@ def test_get_se_questions_with_key(requests):
         assert questions == [example_se_item_1, example_se_item_2]
     teardown_db(test_db)
 
+@patch('memeoverflow.memeoverflow.requests')
+def test_get_se_questions_with_key_and_userid(requests):
+    n = 2
+    data = {
+        'pagesize': n,
+        'site': fake_stack_with_key['site'],
+        'key': fake_stack_with_key['key'],
+    }
+
+    teardown_db(test_db)
+    with MemeOverflow(fake_twitter, fake_imgflip, fake_stack_with_key_and_userid, test_db) as mo:
+        mock_response = Mock(json=Mock(return_value=example_se_response))
+        requests.get.return_value = mock_response
+        questions = mo.get_se_questions(n)
+        requests.get.assert_called_once_with(stack_url, data)
+        assert questions == [example_se_item_1, example_se_item_2]
+    teardown_db(test_db)
+
 @patch('memeoverflow.memeoverflow.logger')
 @patch('memeoverflow.memeoverflow.requests')
 def test_get_se_questions_fail_request(requests, logger):
@@ -194,6 +215,25 @@ def test_get_se_questions_fail_bad_json(requests, logger):
         logger.error.assert_called_once()
         assert questions == []
     teardown_db(test_db)
+
+def test_get_question_url_no_referral():
+    teardown_db(test_db)
+    with MemeOverflow(fake_twitter, fake_imgflip, fake_stack_with_key, test_db) as mo:
+        url = 'https://site.stackexchange.com/questions/98765/some-question'
+        assert mo.get_question_url(url) == url
+        url = 'https://customstackexchange.com/questions/98765/some-question'
+        assert mo.get_question_url(url) == url
+
+def test_get_question_url_no_referral():
+    teardown_db(test_db)
+    with MemeOverflow(fake_twitter, fake_imgflip, fake_stack_with_key_and_userid, test_db) as mo:
+        # fake_stack_with_key_and_userid['user_id'] is 12345
+        url = 'https://site.stackexchange.com/questions/98765/some-question'
+        referral_url = 'https://site.stackexchange.com/questions/98765/12345'
+        assert mo.get_question_url(url) == referral_url
+        url = 'https://customstackexchange.com/questions/98765/12345'
+        referral_url = 'https://customstackexchange.com/questions/98765/12345'
+        assert mo.get_question_url(url) == referral_url
 
 @patch('memeoverflow.memeoverflow.random')
 def test_choose_meme_template(random):

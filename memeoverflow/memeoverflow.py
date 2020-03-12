@@ -61,7 +61,7 @@ class MemeOverflow:
 
     :param dict stackexchange:
         Expects key: site (Stack Exchange site name)
-        Optional key: key (Stack Exchange API key)
+        Optional keys: key, user_id (Stack Exchange API key & user ID)
 
     :param str db_path:
         Path to the sqlite database file
@@ -84,6 +84,11 @@ class MemeOverflow:
                 'No StackExchange API key provided, limited use may apply',
                 StackExchangeNoKeyWarning,
             )
+
+        try:
+            self.stackexchange_user = str(stackexchange['user_id'])
+        except KeyError:
+            self.stackexchange_user = None
 
     def __repr__(self):
         return f"<MemeOverflow object for site {self.stackexchange['site']}>"
@@ -230,6 +235,19 @@ class MemeOverflow:
             logger.error(f'{e.__class__.__name__}: {e}')
             raise
 
+    def get_question_url(self, url):
+        """
+        Return the URL with referral code if provided, otherwise return the
+        normal link
+
+        e.g. with referral: /questions/98765/12345
+        without: /questions/98765/question-title
+        """
+        if self.stackexchange_user:
+            return '/'.join(url.split('/')[:-1] + [self.stackexchange_user])
+        else:
+            return url
+
     def generate_meme_and_tweet(self, question):
         """
         For the given question, if it's not known:
@@ -239,7 +257,7 @@ class MemeOverflow:
         Return True on success, False on fail or question was known
         """
         question_title = html.unescape(question['title'])
-        question_url = question['link']
+        question_url = self.get_question_url(question['link'])
         question_id = question['question_id']
         if self.db.question_is_known(question_id):
             return False

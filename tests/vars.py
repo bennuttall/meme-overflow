@@ -17,6 +17,11 @@ fake_stack_with_key = {
     'site': 'stackexchange',
     'key': 'stack_key',
 }
+fake_stack_with_key_and_userid = {
+    'site': 'stackexchange',
+    'key': 'stack_key',
+    'user_id': 12345,
+}
 
 example_se_item_1 = {
     'tags': ['tag', 'another-tag'],
