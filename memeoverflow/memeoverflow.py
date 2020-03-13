@@ -18,7 +18,7 @@ imgflip_url = 'https://api.imgflip.com/caption_image'
 stack_url = 'https://api.stackexchange.com/2.2/questions'
 
 
-def _validate_keys(name, d, keys):
+def validate_keys(name, d, keys):
     """
     Assert that all keys exist in d, and that they are non-empty strings.
     If any invalid keys found, raise TypeError.
@@ -37,15 +37,29 @@ def _validate_keys(name, d, keys):
         raise TypeError(f'Invalid key values for {name}. Keys must be non-empty strings.')
     return True
 
-def _validate_api_keys(twitter, imgflip, stackexchange):
+def validate_api_keys(twitter, imgflip, stackexchange):
     "Check all API keys are in valid format, otherwise raise TypeError."
     twitter_keys = ('con_key', 'con_sec', 'acc_tok', 'acc_sec')
-    _validate_keys('Twitter', twitter, twitter_keys)
+    validate_keys('Twitter', twitter, twitter_keys)
     imgflip_keys = ('user', 'pass')
-    _validate_keys('imgflip', imgflip, imgflip_keys)
+    validate_keys('imgflip', imgflip, imgflip_keys)
     stackexchange_keys = ('site', )
-    _validate_keys('Stack Exchange', stackexchange, stackexchange_keys)
+    validate_keys('Stack Exchange', stackexchange, stackexchange_keys)
     return True
+
+def tags_to_hashtags(tags):
+    """
+    Replace special characters from list of tags, de-dupe and return string of
+    hashtags.
+
+    e.g. tags_to_hashtags(['foo', 'bar', 'foobar', 'foo-bar'])
+         => '#foo #bar #foobar'
+    """
+    tags = {
+        f"#{tag.replace('-', '').replace('.', '')}"
+        for tag in tags
+    }
+    return ' '.join(tags)
 
 
 class MemeOverflow:
@@ -67,7 +81,7 @@ class MemeOverflow:
         Path to the sqlite database file
     """
     def __init__(self, twitter, imgflip, stackexchange, db_path):
-        _validate_api_keys(twitter, imgflip, stackexchange)
+        validate_api_keys(twitter, imgflip, stackexchange)
 
         self.twitter = Twython(
             twitter['con_key'],
@@ -261,11 +275,12 @@ class MemeOverflow:
         question_id = question['question_id']
         if self.db.question_is_known(question_id):
             return False
-        tags = ' '.join(f'#{tag}' for tag in question['tags'])
+        tags = tags_to_hashtags(question['tags'])
         status = f'{question_title} {question_url} {tags}'
         print(len(status))
         if len(status) > 240:
             status = f'{question_title} {question_url}'
+            logger.info('Tweet too long - removing tags')
         img_url, meme = self.make_meme(question_title)
         try:
             self.tweet(status, img_url)

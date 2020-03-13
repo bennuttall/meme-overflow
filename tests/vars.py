@@ -64,6 +64,19 @@ example_question = {
     'tags': ['foo', 'bar', 'foobar'],
 }
 
+example_long_question = {
+    'title': 'very_very_long_question_title_really_long',
+    'link': 'very_very_long_question_url_really_long',
+    'question_id': 12345,
+    'tags': [
+        'aaaaaaaaa1', 'aaaaaaaaa2', 'aaaaaaaaa3', 'aaaaaaaaa4',
+        'aaaaaaaaa5', 'aaaaaaaaa6', 'aaaaaaaaa7', 'aaaaaaaaa8',
+        'aaaaaaaaa9', 'aaaaaaaa10', 'aaaaaaaa11', 'aaaaaaaa12',
+        'aaaaaaaa13', 'aaaaaaaa14', 'aaaaaaaa15', 'aaaaaaaa16',
+        'aaaaaaaa17', 'aaaaaaaa18', 'aaaaaaaa19', 'aaaaaaaa20',
+    ]
+}
+
 stack_url = 'https://api.stackexchange.com/2.2/questions'
 imgflip_url = 'https://api.imgflip.com/caption_image'
 

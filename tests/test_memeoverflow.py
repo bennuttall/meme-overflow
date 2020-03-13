@@ -1,10 +1,12 @@
 import pytest
-from mock import Mock, patch
+from mock import Mock, patch, call
 from io import BytesIO
 import warnings
 
 from memeoverflow import MemeOverflow, StackExchangeNoKeyWarning
-from memeoverflow.memeoverflow import _validate_keys, _validate_api_keys
+from memeoverflow.memeoverflow import (
+    validate_keys, validate_api_keys, tags_to_hashtags
+)
 from requests.exceptions import RequestException
 from twython import TwythonError
 
@@ -12,46 +14,46 @@ from test_db import teardown_db
 from vars import *
 
 
-def test_validate_keys_fail():
+def testvalidate_keys_fail():
     d = {}
     keys = ('a',)
     with pytest.raises(TypeError):
-        _validate_keys('foo', d, keys)
+        validate_keys('foo', d, keys)
 
     d = {'a': 'a_key'}
     keys = ('a', 'b')
     with pytest.raises(TypeError):
-        _validate_keys('foo', d, keys)
+        validate_keys('foo', d, keys)
 
     d = {'a': 'a_key', 'b': None}
     keys = ('a', 'b')
     with pytest.raises(TypeError):
-        _validate_keys('foo', d, keys)
+        validate_keys('foo', d, keys)
 
     d = {'a': 'a_key', 'b': 1}
     keys = ('a', 'b')
     with pytest.raises(TypeError):
-        _validate_keys('foo', d, keys)
+        validate_keys('foo', d, keys)
 
     d = {'a': 'a_key', 'b': ''}
     keys = ('a', 'b')
     with pytest.raises(TypeError):
-        _validate_keys('foo', d, keys)
+        validate_keys('foo', d, keys)
 
-def test_validate_keys_pass():
+def testvalidate_keys_pass():
     d = {'a': 'a_key'}
     keys = ('a', )
-    assert _validate_keys('foo', d, keys)
+    assert validate_keys('foo', d, keys)
     d = {'a': 'a_key', 'b': 'b_key'}
     keys = ('a', 'b')
-    assert _validate_keys('foo', d, keys)
+    assert validate_keys('foo', d, keys)
 
-def test_validate_api_keys_fail():
+def testvalidate_api_keys_fail():
     twitter = {}
     imgflip = {}
     stackexchange = {}
     with pytest.raises(TypeError):
-        _validate_api_keys(twitter, imgflip, stackexchange)
+        validate_api_keys(twitter, imgflip, stackexchange)
 
     twitter = {
         'con_key': '',
@@ -69,7 +71,7 @@ def test_validate_api_keys_fail():
     imgflip = {}
     stackexchange = {}
     with pytest.raises(TypeError):
-        _validate_api_keys(twitter, imgflip, stackexchange)
+        validate_api_keys(twitter, imgflip, stackexchange)
 
     twitter = {
         'con_key': 'a',
@@ -87,12 +89,33 @@ def test_validate_api_keys_fail():
     imgflip = {}
     stackexchange = {}
     with pytest.raises(TypeError):
-        _validate_api_keys(twitter, imgflip, stackexchange)
+        validate_api_keys(twitter, imgflip, stackexchange)
 
-def test_validate_api_keys_pass():
-    assert _validate_api_keys(fake_twitter, fake_imgflip, fake_stack_no_key)
-    assert _validate_api_keys(fake_twitter, fake_imgflip, fake_stack_with_key)
-    assert _validate_api_keys(fake_twitter, fake_imgflip, fake_stack_with_key_and_userid)
+def testvalidate_api_keys_pass():
+    assert validate_api_keys(fake_twitter, fake_imgflip, fake_stack_no_key)
+    assert validate_api_keys(fake_twitter, fake_imgflip, fake_stack_with_key)
+    assert validate_api_keys(fake_twitter, fake_imgflip, fake_stack_with_key_and_userid)
+
+def test_tags_to_hashtags():
+    tags = []
+    assert tags_to_hashtags(tags) == ''
+
+    tags = ['a']
+    assert tags_to_hashtags(tags) == '#a'
+
+    tags = ['foo-bar', 'foobar']
+    assert tags_to_hashtags(tags) == '#foobar'
+
+    tags = ['foo.bar', 'foobar']
+    assert tags_to_hashtags(tags) == '#foobar'
+
+    tags = ['a', 'b']
+    hashtags = tags_to_hashtags(tags)
+    assert set(hashtags.split()) == {'#a', '#b'}
+
+    tags = ['foo', 'bar', 'foobar']
+    hashtags = tags_to_hashtags(tags)
+    assert set(hashtags.split()) == {'#foo', '#bar', '#foobar'}
 
 def test_bad_init():
     teardown_db(test_db)
@@ -223,6 +246,7 @@ def test_get_question_url_no_referral():
         assert mo.get_question_url(url) == url
         url = 'https://customstackexchange.com/questions/98765/some-question'
         assert mo.get_question_url(url) == url
+    teardown_db(test_db)
 
 def test_get_question_url_no_referral():
     teardown_db(test_db)
@@ -234,43 +258,64 @@ def test_get_question_url_no_referral():
         url = 'https://customstackexchange.com/questions/98765/12345'
         referral_url = 'https://customstackexchange.com/questions/98765/12345'
         assert mo.get_question_url(url) == referral_url
+    teardown_db(test_db)
+
+def assert_meme_choice(random, mo, text, random_memes, chosen_meme,
+                       expected_text0, expected_text1):
+    random.choice.side_effect = random_memes
+    meme, text0, text1 = mo.choose_meme_template(text)
+    assert meme == chosen_meme
+    assert text0 == expected_text0
+    assert text1 == expected_text1
 
 @patch('memeoverflow.memeoverflow.random')
 def test_choose_meme_template(random):
     teardown_db(test_db)
     with MemeOverflow(fake_twitter, fake_imgflip, fake_stack_with_key, test_db) as mo:
         # text should be on line 2 for this template
-        random.choice.return_value = 'PETER_PARKER_CRY'
-        meme, text0, text1 = mo.choose_meme_template('test')
-        assert meme == 'PETER_PARKER_CRY'
-        assert text0 is None
-        assert text1 == 'test'
+        assert_meme_choice(
+            mo=mo,
+            random=random,
+            text='test',
+            random_memes=['PETER_PARKER_CRY'],
+            chosen_meme='PETER_PARKER_CRY',
+            expected_text0=None,
+            expected_text1='test'
+        )
 
         # first attempt rejected due to ending in question mark
         # second attempt ok
-        random.choice.return_value = None
-        random.choice.side_effect = [
-            'BUT_THATS_NONE_OF_MY_BUSINESS',
-            'PETER_PARKER_CRY',
-        ]
-        meme, text0, text1 = mo.choose_meme_template('test?')
-        assert meme == 'PETER_PARKER_CRY'
-        assert text0 is None
-        assert text1 == 'test?'
+        assert_meme_choice(
+            mo=mo,
+            random=random,
+            text='test?',
+            random_memes=['BUT_THATS_NONE_OF_MY_BUSINESS', 'PETER_PARKER_CRY'],
+            chosen_meme='PETER_PARKER_CRY',
+            expected_text0=None,
+            expected_text1='test?'
+        )
 
         # "is this" text should force "is this a pigeon?" template
-        meme, text0, text1 = mo.choose_meme_template('is this a test?')
-        assert meme == 'IS_THIS_A_PIGEON'
-        assert text0 == 'is this'
-        assert text1 == 'a test?'
+        assert_meme_choice(
+            mo=mo,
+            random=random,
+            text='is this a test?',
+            random_memes=['PETER_PARKER_CRY'],
+            chosen_meme='IS_THIS_A_PIGEON',
+            expected_text0='is this',
+            expected_text1='a test?'
+        )
 
         # text should have accompanying line 2
-        random.choice.side_effect = None
-        random.choice.return_value = 'SEE_NOBODY_CARES'
-        meme, text0, text1 = mo.choose_meme_template('test')
-        assert meme == 'SEE_NOBODY_CARES'
-        assert text0 == 'test'
-        assert text1 == 'See! Nobody cares'
+        assert_meme_choice(
+            mo=mo,
+            random=random,
+            text='test',
+            random_memes=['SEE_NOBODY_CARES'],
+            chosen_meme='SEE_NOBODY_CARES',
+            expected_text0='test',
+            expected_text1='See! Nobody cares'
+        )
 
         # try pigeon, well yes and dr evil but none match criteria, so skip
         # them all and keep trying until a no-rules one appears
@@ -286,6 +331,21 @@ def test_choose_meme_template(random):
         assert meme == 'BATMAN_SLAPPING_ROBIN'
         assert text0 == 'test'
         assert text1 is None
+        assert_meme_choice(
+            mo=mo,
+            random=random,
+            text='test',
+            random_memes=[
+                'IS_THIS_A_PIGEON',
+                'WELL_YES_BUT_ACTUALLY_NO',
+                'DR_EVIL_LASER',
+                'PHILOSORAPTOR',
+                'BATMAN_SLAPPING_ROBIN',
+            ],
+            chosen_meme='BATMAN_SLAPPING_ROBIN',
+            expected_text0='test',
+            expected_text1=None
+        )
     teardown_db(test_db)
 
 @patch('memeoverflow.memeoverflow.random')
@@ -447,6 +507,32 @@ def test_generate_meme_and_tweet(twython_class, bytesio_class, requests, random,
         question_title = example_question['title']
         log_msg = f'Tweeted: {question_title} [{meme}]'
         logger.info.assert_called_once_with(log_msg)
+        assert mo.db.question_is_known(example_question['question_id'])
+    teardown_db(test_db)
+
+@patch('memeoverflow.memeoverflow.logger')
+@patch('memeoverflow.memeoverflow.random')
+@patch('memeoverflow.memeoverflow.requests')
+@patch('memeoverflow.memeoverflow.BytesIO')
+@patch('memeoverflow.memeoverflow.Twython')
+def test_generate_meme_and_tweet_long_question(twython_class, bytesio_class, requests, random, logger):
+    twython = Mock()
+    twython_class.return_value = twython
+    teardown_db(test_db)
+    with MemeOverflow(fake_twitter, fake_imgflip, fake_stack_with_key, test_db) as mo:
+        meme = 'BATMAN_SLAPPING_ROBIN'
+        random.choice.return_value = meme
+        mock_imgflip_response = Mock(content=example_imgflip_img_blob)
+        requests.get.return_value = mock_imgflip_response
+        img_bytes = Mock()
+        bytesio_class.return_value = img_bytes
+        twython.upload_media.return_value = example_twitter_upload_response
+        assert mo.generate_meme_and_tweet(example_long_question)
+        question_title = example_long_question['title']
+        log_msg_1 = 'Tweet too long - removing tags'
+        log_msg_2 = f'Tweeted: {question_title} [{meme}]'
+        calls = [call(log_msg_1), call(log_msg_2)]
+        logger.info.assert_has_calls(calls)
         assert mo.db.question_is_known(example_question['question_id'])
     teardown_db(test_db)
 
