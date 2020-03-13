@@ -14,7 +14,7 @@ from test_db import teardown_db
 from vars import *
 
 
-def testvalidate_keys_fail():
+def test_validate_keys_fail():
     d = {}
     keys = ('a',)
     with pytest.raises(TypeError):
@@ -40,7 +40,7 @@ def testvalidate_keys_fail():
     with pytest.raises(TypeError):
         validate_keys('foo', d, keys)
 
-def testvalidate_keys_pass():
+def test_validate_keys_pass():
     d = {'a': 'a_key'}
     keys = ('a', )
     assert validate_keys('foo', d, keys)
@@ -48,7 +48,7 @@ def testvalidate_keys_pass():
     keys = ('a', 'b')
     assert validate_keys('foo', d, keys)
 
-def testvalidate_api_keys_fail():
+def test_validate_api_keys_fail():
     twitter = {}
     imgflip = {}
     stackexchange = {}
@@ -91,7 +91,7 @@ def testvalidate_api_keys_fail():
     with pytest.raises(TypeError):
         validate_api_keys(twitter, imgflip, stackexchange)
 
-def testvalidate_api_keys_pass():
+def test_validate_api_keys_pass():
     assert validate_api_keys(fake_twitter, fake_imgflip, fake_stack_no_key)
     assert validate_api_keys(fake_twitter, fake_imgflip, fake_stack_with_key)
     assert validate_api_keys(fake_twitter, fake_imgflip, fake_stack_with_key_and_userid)
