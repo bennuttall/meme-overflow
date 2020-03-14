@@ -55,11 +55,14 @@ def tags_to_hashtags(tags):
     e.g. tags_to_hashtags(['foo', 'bar', 'foobar', 'foo-bar'])
          => '#foo #bar #foobar'
     """
-    tags = {
-        f"#{tag.replace('-', '').replace('.', '')}"
-        for tag in tags
-    }
-    return ' '.join(tags)
+    hashtags = set()
+    for tag in tags:
+        hashtag = tag.replace('-', '').replace('.', '')
+        try:
+            int(hashtag)
+        except ValueError:
+            hashtags.add(f'#{hashtag}')
+    return ' '.join(hashtags)
 
 
 class MemeOverflow:
@@ -277,7 +280,6 @@ class MemeOverflow:
             return False
         tags = tags_to_hashtags(question['tags'])
         status = f'{question_title} {question_url} {tags}'
-        print(len(status))
         if len(status) > 240:
             status = f'{question_title} {question_url}'
             logger.info('Tweet too long - removing tags')

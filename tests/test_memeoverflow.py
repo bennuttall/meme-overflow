@@ -100,16 +100,30 @@ def test_tags_to_hashtags():
     tags = []
     assert tags_to_hashtags(tags) == ''
 
+    tags = ['1']
+    assert tags_to_hashtags(tags) == ''
+
+    tags = ['1', '10', '100']
+    assert tags_to_hashtags(tags) == ''
+
     tags = ['a']
     assert tags_to_hashtags(tags) == '#a'
 
-    tags = ['foo-bar', 'foobar']
+    tags = ['1a', 'a10', '100']
+    hashtags = tags_to_hashtags(tags)
+    assert set(hashtags.split()) == {'#1a', '#a10'}
+
+    tags = ['foo-bar']
     assert tags_to_hashtags(tags) == '#foobar'
 
-    tags = ['foo.bar', 'foobar']
+    tags = ['foo.bar']
     assert tags_to_hashtags(tags) == '#foobar'
 
     tags = ['a', 'b']
+    hashtags = tags_to_hashtags(tags)
+    assert set(hashtags.split()) == {'#a', '#b'}
+
+    tags = ['100', 'a', 'b']
     hashtags = tags_to_hashtags(tags)
     assert set(hashtags.split()) == {'#a', '#b'}
 
