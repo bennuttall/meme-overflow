@@ -117,13 +117,11 @@ class MemeOverflow:
         pass
 
     def __call__(self):
-        while True:
-            questions = self.get_se_questions()
-            for q in questions:
-                tweeted = self.generate_meme_and_tweet(q)
-                if tweeted:
-                    sleep(60*5)
-            sleep(60*5)
+        questions = self.get_se_questions()
+        for q in questions:
+            tweeted = self.generate_meme_and_tweet(q)
+            if tweeted:
+                sleep(60*5)
 
     def get_se_questions(self, n=100):
         "Retreive n questions from the StackExchange site and return as a list"

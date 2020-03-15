@@ -2,6 +2,7 @@ import pytest
 from mock import Mock, patch, call
 from io import BytesIO
 import warnings
+from itertools import cycle
 
 from memeoverflow import MemeOverflow, StackExchangeNoKeyWarning
 from memeoverflow.memeoverflow import (
@@ -333,18 +334,6 @@ def test_choose_meme_template(random):
 
         # try pigeon, well yes and dr evil but none match criteria, so skip
         # them all and keep trying until a no-rules one appears
-        random.choice.return_value = None
-        random.choice.side_effect = [
-            'IS_THIS_A_PIGEON',
-            'WELL_YES_BUT_ACTUALLY_NO',
-            'DR_EVIL_LASER',
-            'PHILOSORAPTOR',
-            'BATMAN_SLAPPING_ROBIN',
-        ]
-        meme, text0, text1 = mo.choose_meme_template('test')
-        assert meme == 'BATMAN_SLAPPING_ROBIN'
-        assert text0 == 'test'
-        assert text1 is None
         assert_meme_choice(
             mo=mo,
             random=random,
@@ -359,6 +348,187 @@ def test_choose_meme_template(random):
             chosen_meme='BATMAN_SLAPPING_ROBIN',
             expected_text0='test',
             expected_text1=None
+        )
+
+        # word "possible" trigger
+        assert_meme_choice(
+            mo=mo,
+            random=random,
+            text='is it possible this is a test?',
+            random_memes=['SEE_NOBODY_CARES'],
+            chosen_meme='WELL_YES_BUT_ACTUALLY_NO',
+            expected_text0='is it possible this is a test?',
+            expected_text1=None
+        )
+
+        # quotes => dr evil
+        assert_meme_choice(
+            mo=mo,
+            random=random,
+            text='what is "this" test',
+            random_memes=['SEE_NOBODY_CARES'],
+            chosen_meme='DR_EVIL_LASER',
+            expected_text0='what is "this" test',
+            expected_text1=None
+        )
+
+        # if question => philosoraptor
+        assert_meme_choice(
+            mo=mo,
+            random=random,
+            text='if this is a test?',
+            random_memes=['SEE_NOBODY_CARES'],
+            chosen_meme='PHILOSORAPTOR',
+            expected_text0='if this is a test?',
+            expected_text1=None
+        )
+
+        # doesn't end in ? so can be none of my business
+        assert_meme_choice(
+            mo=mo,
+            random=random,
+            text='test',
+            random_memes=['BUT_THATS_NONE_OF_MY_BUSINESS'],
+            chosen_meme='BUT_THATS_NONE_OF_MY_BUSINESS',
+            expected_text0='test',
+            expected_text1="But that's none of my business"
+        )
+
+        # doesn't end in ? so can be change my mind
+        assert_meme_choice(
+            mo=mo,
+            random=random,
+            text='test',
+            random_memes=['CHANGE_MY_MIND'],
+            chosen_meme='CHANGE_MY_MIND',
+            expected_text0='test',
+            expected_text1=None
+        )
+
+        # doesn't end in ? so can be ancient aliens
+        assert_meme_choice(
+            mo=mo,
+            random=random,
+            text='test',
+            random_memes=['ANCIENT_ALIENS'],
+            chosen_meme='ANCIENT_ALIENS',
+            expected_text0='test',
+            expected_text1='Therefore aliens'
+        )
+
+        # ends in ? can't be any of these
+        assert_meme_choice(
+            mo=mo,
+            random=random,
+            text='test?',
+            random_memes=[
+                'BUT_THATS_NONE_OF_MY_BUSINESS',
+                'CHANGE_MY_MIND',
+                'ANCIENT_ALIENS',
+                'BATMAN_SLAPPING_ROBIN',
+            ],
+            chosen_meme='BATMAN_SLAPPING_ROBIN',
+            expected_text0='test?',
+            expected_text1=None
+        )
+
+        # brace yourselves
+        assert_meme_choice(
+            mo=mo,
+            random=random,
+            text='test',
+            random_memes=['BRACE_YOURSELVES_X_IS_COMING'],
+            chosen_meme='BRACE_YOURSELVES_X_IS_COMING',
+            expected_text0='Brace yourselves',
+            expected_text1='test'
+        )
+
+        # i'll just wait here
+        assert_meme_choice(
+            mo=mo,
+            random=random,
+            text='test',
+            random_memes=['ILL_JUST_WAIT_HERE'],
+            chosen_meme='ILL_JUST_WAIT_HERE',
+            expected_text0='test',
+            expected_text1="I'll just wait here"
+        )
+
+        # say that again
+        assert_meme_choice(
+            mo=mo,
+            random=random,
+            text='test',
+            random_memes=['SAY_THAT_AGAIN_I_DARE_YOU'],
+            chosen_meme='SAY_THAT_AGAIN_I_DARE_YOU',
+            expected_text0='test',
+            expected_text1="Say that again I dare you"
+        )
+
+        # grumpy cat
+        assert_meme_choice(
+            mo=mo,
+            random=random,
+            text='test',
+            random_memes=['GRUMPY_CAT'],
+            chosen_meme='GRUMPY_CAT',
+            expected_text0='test',
+            expected_text1="No"
+        )
+
+        # that would be great
+        assert_meme_choice(
+            mo=mo,
+            random=random,
+            text='test',
+            random_memes=['THAT_WOULD_BE_GREAT'],
+            chosen_meme='THAT_WOULD_BE_GREAT',
+            expected_text0='test',
+            expected_text1="That would be great"
+        )
+
+        # and it's gone
+        assert_meme_choice(
+            mo=mo,
+            random=random,
+            text='test',
+            random_memes=['AAAAAND_ITS_GONE'],
+            chosen_meme='AAAAAND_ITS_GONE',
+            expected_text0='test',
+            expected_text1="Aaaaand it's gone"
+        )
+
+        # AND_EVERYBODY_LOSES_THEIR_MINDS
+        assert_meme_choice(
+            mo=mo,
+            random=random,
+            text='test',
+            random_memes=['AND_EVERYBODY_LOSES_THEIR_MINDS'],
+            chosen_meme='AND_EVERYBODY_LOSES_THEIR_MINDS',
+            expected_text0='test',
+            expected_text1="Everybody loses their minds"
+        )
+
+        # STAR_WARS_NO
+        assert_meme_choice(
+            mo=mo,
+            random=random,
+            text='test',
+            random_memes=['STAR_WARS_NO'],
+            chosen_meme='STAR_WARS_NO',
+            expected_text0='test',
+            expected_text1="Noooooooo"
+        )
+
+        # MUGATU_SO_HOT_RIGHT_NOW
+        assert_meme_choice(
+            mo=mo,
+            random=random,
+            text='test',
+            random_memes=['MUGATU_SO_HOT_RIGHT_NOW'],
+            chosen_meme='MUGATU_SO_HOT_RIGHT_NOW',
+            expected_text0='test',
+            expected_text1="So hot right now"
         )
     teardown_db(test_db)
 
@@ -565,4 +735,71 @@ def test_generate_meme_and_tweet_fail(sleep):
         mo.tweet = Mock(side_effect=TwythonError('error'))
         assert not mo.generate_meme_and_tweet(example_question)
         assert not mo.db.question_is_known(example_question['question_id'])
+    teardown_db(test_db)
+
+@patch('memeoverflow.memeoverflow.logger')
+@patch('memeoverflow.memeoverflow.random')
+@patch('memeoverflow.memeoverflow.requests')
+@patch('memeoverflow.memeoverflow.BytesIO')
+@patch('memeoverflow.memeoverflow.Twython')
+@patch('memeoverflow.memeoverflow.sleep')
+def test_call(sleep, twython_class, bytesio_class, requests, random, logger):
+    n = 2
+    data = {
+        'pagesize': n,
+        'site': fake_stack_with_key['site'],
+        'key': fake_stack_with_key['key'],
+    }
+
+    twython = Mock()
+    twython_class.return_value = twython
+    teardown_db(test_db)
+    with MemeOverflow(fake_twitter, fake_imgflip, fake_stack_with_key, test_db) as mo:
+        mock_se_response = Mock(json=Mock(return_value=example_se_response))
+        mock_imgflip_response = Mock(content=example_imgflip_img_blob)
+        requests.get.side_effect = cycle([mock_se_response, mock_imgflip_response])
+        meme = 'BATMAN_SLAPPING_ROBIN'
+        random.choice.return_value = meme
+        mock_imgflip_response = Mock(content=example_imgflip_img_blob)
+        requests.get.return_value = mock_imgflip_response
+        img_bytes = Mock()
+        bytesio_class.return_value = img_bytes
+        twython.upload_media.return_value = example_twitter_upload_response
+        mo()
+        assert twython.update_status.call_count == 2
+        assert sleep.call_count == 2
+    teardown_db(test_db)
+
+@patch('memeoverflow.memeoverflow.logger')
+@patch('memeoverflow.memeoverflow.random')
+@patch('memeoverflow.memeoverflow.requests')
+@patch('memeoverflow.memeoverflow.BytesIO')
+@patch('memeoverflow.memeoverflow.Twython')
+@patch('memeoverflow.memeoverflow.sleep')
+def test_call_fail(sleep, twython_class, bytesio_class, requests, random, logger):
+    n = 2
+    data = {
+        'pagesize': n,
+        'site': fake_stack_with_key['site'],
+        'key': fake_stack_with_key['key'],
+    }
+
+    twython = Mock()
+    twython_class.return_value = twython
+    teardown_db(test_db)
+    with MemeOverflow(fake_twitter, fake_imgflip, fake_stack_with_key, test_db) as mo:
+        mock_se_response = Mock(json=Mock(return_value=example_se_response))
+        mock_imgflip_response = Mock(content=example_imgflip_img_blob)
+        requests.get.side_effect = cycle([mock_se_response, mock_imgflip_response])
+        meme = 'BATMAN_SLAPPING_ROBIN'
+        random.choice.return_value = meme
+        mock_imgflip_response = Mock(content=example_imgflip_img_blob)
+        requests.get.return_value = mock_imgflip_response
+        img_bytes = Mock()
+        bytesio_class.return_value = img_bytes
+        twython.upload_media.return_value = example_twitter_upload_response
+        twython.update_status.side_effect = TwythonError('update status error')
+        mo()
+        assert twython.update_status.call_count == 2
+        assert sleep.call_count == 2
     teardown_db(test_db)
