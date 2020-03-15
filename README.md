@@ -41,6 +41,10 @@ app](https://developer.twitter.com/en/apps) and get your four API keys.
 and password.
 
 1. Register for a [Stack Exchange App Key](https://stackapps.com/apps/oauth/register)
+and find your user ID for each site (click on your avatar to go to your user
+page and your ID is the number in the URL e.g. `806889` in
+[stackoverflow.com/users/806889/ben-nuttall](https://stackoverflow.com/users/806889/ben-nuttall)) -
+note these are different for each site.
 
 ### Essential setup
 
