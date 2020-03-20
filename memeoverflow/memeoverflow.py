@@ -9,7 +9,7 @@ import html
 import warnings
 
 import requests
-from requests.exceptions import RequestException
+from json import JSONDecodeError
 from twython import Twython, TwythonError
 from logzero import logger
 
@@ -130,12 +130,16 @@ class MemeOverflow:
             'site': self.stackexchange['site'],
             'key': self.stackexchange.get('key', None),
         }
-        try:
-            r = requests.get(stack_url, params)
-            return r.json()['items']
-        except (KeyError, RequestException) as e:
-            logger.error(f'{e.__class__.__name__}: {e}')
-            return []
+        r = requests.get(stack_url, params)
+        if r.status_code == 200:
+            try:
+                return r.json()['items']
+            except (JSONDecodeError, KeyError) as e:
+                logger.error(f'{e.__class__.__name__}: {e}')
+        else:
+            logger.error(f'Unable to connect to imgflip: status code {r.status_code}')
+        sleep(60)
+        return []
 
     def choose_meme_template(self, text):
         """
@@ -229,26 +233,33 @@ class MemeOverflow:
             'text0': text0,
             'text1': text1,
         }
-        try:
-            r = requests.post(imgflip_url, data=data)
-            img_url = r.json()['data']['url']
-            return (img_url, meme)
-        except (KeyError, RequestException) as e:
-            logger.error(f'{e.__class__.__name__}: {e}')
-            sleep(30)
-            return self.make_meme(text)
+        r = requests.post(imgflip_url, data=data)
+        if r.status_code == 200:
+            try:
+                img_url = r.json()['data']['url']
+                return (img_url, meme)
+            except (JSONDecodeError, KeyError) as e:
+                logger.error(f'{e.__class__.__name__}: {e}')
+        else:
+            logger.error(f'Unable to connect to imgflip: status code {r.status_code}')
+        sleep(60)
+        return self.make_meme(text)
 
     def tweet(self, status, img_url):
         "Tweet status with the image attached"
-        try:
-            r = requests.get(img_url)
+        r = requests.get(img_url)
+        if r.status_code == 200:
             img = BytesIO(r.content)
-            response = self.twitter.upload_media(media=img)
-            media_ids = [response['media_id']]
-            self.twitter.update_status(status=status, media_ids=media_ids)
-        except (RequestException, TwythonError) as e:
-            logger.error(f'{e.__class__.__name__}: {e}')
-            raise
+            try:
+                response = self.twitter.upload_media(media=img)
+                media_ids = [response['media_id']]
+                self.twitter.update_status(status=status, media_ids=media_ids)
+            except TwythonError as e:
+                logger.error(f'{e.__class__.__name__}: {e}')
+                raise
+        else:
+            logger.error(f'Unable to connect to imgflip: status code {r.status_code}')
+            sleep(60)
 
     def get_question_url(self, url):
         """

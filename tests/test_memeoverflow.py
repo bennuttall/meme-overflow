@@ -8,7 +8,6 @@ from memeoverflow import MemeOverflow, StackExchangeNoKeyWarning
 from memeoverflow.memeoverflow import (
     validate_keys, validate_api_keys, tags_to_hashtags
 )
-from requests.exceptions import RequestException
 from twython import TwythonError
 
 from test_db import teardown_db
@@ -172,7 +171,10 @@ def test_get_se_questions_no_key(requests):
         with MemeOverflow(fake_twitter, fake_imgflip, fake_stack_no_key, test_db) as mo:
             assert len(w) == 1
             assert w[0].category == StackExchangeNoKeyWarning
-            mock_response = Mock(json=Mock(return_value=example_se_response))
+            mock_response = Mock(
+                json=Mock(return_value=example_se_response),
+                status_code=200
+            )
             requests.get.return_value = mock_response
             questions = mo.get_se_questions(n)
             requests.get.assert_called_once_with(stack_url, data)
@@ -190,7 +192,10 @@ def test_get_se_questions_with_key(requests):
 
     teardown_db(test_db)
     with MemeOverflow(fake_twitter, fake_imgflip, fake_stack_with_key, test_db) as mo:
-        mock_response = Mock(json=Mock(return_value=example_se_response))
+        mock_response = Mock(
+            json=Mock(return_value=example_se_response),
+            status_code=200
+        )
         requests.get.return_value = mock_response
         questions = mo.get_se_questions(n)
         requests.get.assert_called_once_with(stack_url, data)
@@ -208,7 +213,10 @@ def test_get_se_questions_with_key_and_userid(requests):
 
     teardown_db(test_db)
     with MemeOverflow(fake_twitter, fake_imgflip, fake_stack_with_key_and_userid, test_db) as mo:
-        mock_response = Mock(json=Mock(return_value=example_se_response))
+        mock_response = Mock(
+            json=Mock(return_value=example_se_response),
+            status_code=200
+        )
         requests.get.return_value = mock_response
         questions = mo.get_se_questions(n)
         requests.get.assert_called_once_with(stack_url, data)
@@ -217,7 +225,8 @@ def test_get_se_questions_with_key_and_userid(requests):
 
 @patch('memeoverflow.memeoverflow.logger')
 @patch('memeoverflow.memeoverflow.requests')
-def test_get_se_questions_fail_request(requests, logger):
+@patch('memeoverflow.memeoverflow.sleep')
+def test_get_se_questions_fail_request(sleep, requests, logger):
     n = 2
     data = {
         'pagesize': n,
@@ -227,16 +236,18 @@ def test_get_se_questions_fail_request(requests, logger):
 
     teardown_db(test_db)
     with MemeOverflow(fake_twitter, fake_imgflip, fake_stack_with_key, test_db) as mo:
-        requests.get.side_effect = RequestException()
+        requests.get.return_value = Mock(status_code=400)
         questions = mo.get_se_questions(n)
         requests.get.assert_called_once_with(stack_url, data)
         logger.error.assert_called_once()
+        sleep.assert_called_once()
         assert questions == []
     teardown_db(test_db)
 
 @patch('memeoverflow.memeoverflow.logger')
 @patch('memeoverflow.memeoverflow.requests')
-def test_get_se_questions_fail_bad_json(requests, logger):
+@patch('memeoverflow.memeoverflow.sleep')
+def test_get_se_questions_bad_request(sleep, requests, logger):
     n = 2
     data = {
         'pagesize': n,
@@ -246,11 +257,36 @@ def test_get_se_questions_fail_bad_json(requests, logger):
 
     teardown_db(test_db)
     with MemeOverflow(fake_twitter, fake_imgflip, fake_stack_with_key, test_db) as mo:
-        mock_response = Mock(json=Mock(return_value=empty_dict))
+        requests.get.return_value = Mock(status_code=400)
+        questions = mo.get_se_questions(n)
+        requests.get.assert_called_once_with(stack_url, data)
+        logger.error.assert_called_once()
+        sleep.assert_called_once()
+        assert questions == []
+    teardown_db(test_db)
+
+@patch('memeoverflow.memeoverflow.logger')
+@patch('memeoverflow.memeoverflow.requests')
+@patch('memeoverflow.memeoverflow.sleep')
+def test_get_se_questions_fail_bad_json(sleep, requests, logger):
+    n = 2
+    data = {
+        'pagesize': n,
+        'site': fake_stack_with_key['site'],
+        'key': fake_stack_with_key['key'],
+    }
+
+    teardown_db(test_db)
+    with MemeOverflow(fake_twitter, fake_imgflip, fake_stack_with_key, test_db) as mo:
+        mock_response = Mock(
+            status_code=200,
+            json=Mock(return_value=empty_dict),
+        )
         requests.get.return_value = mock_response
         questions = mo.get_se_questions(n)
         requests.get.assert_called_once_with(stack_url, data)
         logger.error.assert_called_once()
+        sleep.assert_called_once()
         assert questions == []
     teardown_db(test_db)
 
@@ -263,7 +299,7 @@ def test_get_question_url_no_referral():
         assert mo.get_question_url(url) == url
     teardown_db(test_db)
 
-def test_get_question_url_no_referral():
+def test_get_question_url_with_referral():
     teardown_db(test_db)
     with MemeOverflow(fake_twitter, fake_imgflip, fake_stack_with_key_and_userid, test_db) as mo:
         # fake_stack_with_key_and_userid['user_id'] is 12345
@@ -546,8 +582,16 @@ def test_make_meme(requests, random):
     teardown_db(test_db)
     with MemeOverflow(fake_twitter, fake_imgflip, fake_stack_with_key, test_db) as mo:
         random.choice.return_value = 'BATMAN_SLAPPING_ROBIN'
-        mock_response = Mock(json=Mock(return_value=example_imgflip_response))
-        requests.post.return_value = mock_response
+        mock_imgflip_post_response = Mock(
+            status_code=200,
+            json=Mock(return_value=example_imgflip_response),
+        )
+        requests.post.return_value = mock_imgflip_post_response
+        mock_imgflip_get_response = Mock(
+            status_code=200,
+            content=example_imgflip_img_blob,
+        )
+        requests.get.return_value = mock_imgflip_get_response
         img_url, meme_name = mo.make_meme('test')
         requests.post.assert_called_once_with(imgflip_url, data=data)
         assert img_url == example_imgflip_img_url
@@ -570,12 +614,51 @@ def test_make_meme_fail_retry(requests, random, sleep, logger):
     teardown_db(test_db)
     with MemeOverflow(fake_twitter, fake_imgflip, fake_stack_with_key, test_db) as mo:
         random.choice.return_value = 'BATMAN_SLAPPING_ROBIN'
-        mock_good_response = Mock(json=Mock(return_value=example_imgflip_response))
-        requests.post.side_effect = [RequestException(), mock_good_response]
+        mock_bad_response = Mock(status_code=400)
+        mock_good_response = Mock(
+            status_code=200,
+            json=Mock(return_value=example_imgflip_response),
+        )
+        requests.post.side_effect = [mock_bad_response, mock_good_response]
         img_url, meme_name = mo.make_meme('test')
 
         requests.post.assert_called_with(imgflip_url, data=data)
         logger.error.assert_called_once()
+        sleep.assert_called_once()
+        assert img_url == example_imgflip_img_url
+        assert meme_name == 'BATMAN_SLAPPING_ROBIN'
+    teardown_db(test_db)
+
+@patch('memeoverflow.memeoverflow.logger')
+@patch('memeoverflow.memeoverflow.sleep')
+@patch('memeoverflow.memeoverflow.random')
+@patch('memeoverflow.memeoverflow.requests')
+def test_make_meme_fail_keyerror_retry(requests, random, sleep, logger):
+    data = {
+        'username': 'imgflip_user',
+        'password': 'imgflip_pass',
+        'template_id': BATMAN_SLAPPING_ROBIN,
+        'text0': 'test',
+        'text1': None,
+    }
+
+    teardown_db(test_db)
+    with MemeOverflow(fake_twitter, fake_imgflip, fake_stack_with_key, test_db) as mo:
+        random.choice.return_value = 'BATMAN_SLAPPING_ROBIN'
+        mock_bad_response = Mock(
+            status_code=200,
+            json=Mock(return_value=empty_dict),
+        )
+        mock_good_response = Mock(
+            status_code=200,
+            json=Mock(return_value=example_imgflip_response),
+        )
+        requests.post.side_effect = [mock_bad_response, mock_good_response]
+        img_url, meme_name = mo.make_meme('test')
+
+        requests.post.assert_called_with(imgflip_url, data=data)
+        logger.error.assert_called_once()
+        sleep.assert_called_once()
         assert img_url == example_imgflip_img_url
         assert meme_name == 'BATMAN_SLAPPING_ROBIN'
     teardown_db(test_db)
@@ -597,7 +680,10 @@ def test_make_meme_bad_response_retry(requests, random, sleep, logger):
     with MemeOverflow(fake_twitter, fake_imgflip, fake_stack_with_key, test_db) as mo:
         random.choice.return_value = 'BATMAN_SLAPPING_ROBIN'
         mock_bad_response = Mock(json=Mock(return_value=empty_dict))
-        mock_good_response = Mock(json=Mock(return_value=example_imgflip_response))
+        mock_good_response = Mock(
+            status_code=200,
+            json=Mock(return_value=example_imgflip_response),
+        )
         requests.post.side_effect = [mock_bad_response, mock_good_response]
         img_url, meme_name = mo.make_meme('test')
         requests.post.assert_called_with(imgflip_url, data=data)
@@ -614,7 +700,10 @@ def test_tweet(bytesio_class, twython_class, requests):
     twython_class.return_value = twython
     teardown_db(test_db)
     with MemeOverflow(fake_twitter, fake_imgflip, fake_stack_with_key, test_db) as mo:
-        mock_response = Mock(content=example_imgflip_img_blob)
+        mock_response = Mock(
+            json=Mock(return_value=example_imgflip_img_blob),
+            status_code=200
+        )
         requests.get.return_value = mock_response
         img_bytes = Mock()
         bytesio_class.return_value = img_bytes
@@ -628,13 +717,14 @@ def test_tweet(bytesio_class, twython_class, requests):
 
 @patch('memeoverflow.memeoverflow.logger')
 @patch('memeoverflow.memeoverflow.requests')
-def test_tweet_fail_imgflip(requests, logger):
+@patch('memeoverflow.memeoverflow.sleep')
+def test_tweet_fail_imgflip(sleep, requests, logger):
     teardown_db(test_db)
     with MemeOverflow(fake_twitter, fake_imgflip, fake_stack_with_key, test_db) as mo:
-        requests.get.side_effect = RequestException()
-        with pytest.raises(RequestException):
-            mo.tweet('test', example_imgflip_img_url)
+        requests.get.return_value = Mock(status_code=400)
+        mo.tweet('test', example_imgflip_img_url)
         logger.error.assert_called_once()
+        sleep.assert_called_once()
     teardown_db(test_db)
 
 @patch('memeoverflow.memeoverflow.logger')
@@ -645,7 +735,7 @@ def test_tweet_fail_upload(twython_class, requests, logger):
     twython_class.return_value = twython
     teardown_db(test_db)
     with MemeOverflow(fake_twitter, fake_imgflip, fake_stack_with_key, test_db) as mo:
-        mock_response = Mock(content=example_imgflip_img_blob)
+        mock_response = Mock(status_code=200, content=example_imgflip_img_blob)
         requests.get.return_value = mock_response
         twython.upload_media.side_effect = TwythonError('upload media error')
         with pytest.raises(TwythonError):
@@ -661,7 +751,7 @@ def test_tweet_fail_update_status(twython_class, requests, logger):
     twython_class.return_value = twython
     teardown_db(test_db)
     with MemeOverflow(fake_twitter, fake_imgflip, fake_stack_with_key, test_db) as mo:
-        mock_response = Mock(content=example_imgflip_img_blob)
+        mock_response = Mock(status_code=200, content=example_imgflip_img_blob)
         requests.get.return_value = mock_response
         twython.upload_media.return_value = example_twitter_upload_response
         twython.update_status.side_effect = TwythonError('update status error')
@@ -682,8 +772,16 @@ def test_generate_meme_and_tweet(twython_class, bytesio_class, requests, random,
     with MemeOverflow(fake_twitter, fake_imgflip, fake_stack_with_key, test_db) as mo:
         meme = 'BATMAN_SLAPPING_ROBIN'
         random.choice.return_value = meme
-        mock_imgflip_response = Mock(content=example_imgflip_img_blob)
-        requests.get.return_value = mock_imgflip_response
+        mock_imgflip_post_response = Mock(
+            status_code=200,
+            json=Mock(return_value=example_imgflip_response),
+        )
+        requests.post.return_value = mock_imgflip_post_response
+        mock_imgflip_get_response = Mock(
+            status_code=200,
+            content=example_imgflip_img_blob,
+        )
+        requests.get.return_value = mock_imgflip_get_response
         img_bytes = Mock()
         bytesio_class.return_value = img_bytes
         twython.upload_media.return_value = example_twitter_upload_response
@@ -706,8 +804,16 @@ def test_generate_meme_and_tweet_long_question(twython_class, bytesio_class, req
     with MemeOverflow(fake_twitter, fake_imgflip, fake_stack_with_key, test_db) as mo:
         meme = 'BATMAN_SLAPPING_ROBIN'
         random.choice.return_value = meme
-        mock_imgflip_response = Mock(content=example_imgflip_img_blob)
-        requests.get.return_value = mock_imgflip_response
+        mock_imgflip_post_response = Mock(
+            status_code=200,
+            json=Mock(return_value=example_imgflip_response),
+        )
+        requests.post.return_value = mock_imgflip_post_response
+        mock_imgflip_get_response = Mock(
+            status_code=200,
+            content=example_imgflip_img_blob,
+        )
+        requests.get.return_value = mock_imgflip_get_response
         img_bytes = Mock()
         bytesio_class.return_value = img_bytes
         twython.upload_media.return_value = example_twitter_upload_response
@@ -744,28 +850,38 @@ def test_generate_meme_and_tweet_fail(sleep):
 @patch('memeoverflow.memeoverflow.Twython')
 @patch('memeoverflow.memeoverflow.sleep')
 def test_call(sleep, twython_class, bytesio_class, requests, random, logger):
-    n = 2
-    data = {
-        'pagesize': n,
-        'site': fake_stack_with_key['site'],
-        'key': fake_stack_with_key['key'],
-    }
-
     twython = Mock()
     twython_class.return_value = twython
     teardown_db(test_db)
     with MemeOverflow(fake_twitter, fake_imgflip, fake_stack_with_key, test_db) as mo:
-        mock_se_response = Mock(json=Mock(return_value=example_se_response))
-        mock_imgflip_response = Mock(content=example_imgflip_img_blob)
-        requests.get.side_effect = cycle([mock_se_response, mock_imgflip_response])
+        mock_se_response = Mock(
+            status_code=200,
+            json=Mock(return_value=example_se_response),
+        )
+        mock_imgflip_response = Mock(
+            status_code=200,
+            content=example_imgflip_img_blob,
+        )
+        requests.get.side_effect = cycle(
+            [mock_se_response, mock_imgflip_response]
+        )
+        mock_imgflip_post_response = Mock(
+            status_code=200,
+            json=Mock(return_value=example_imgflip_response),
+        )
+        requests.post.return_value = mock_imgflip_post_response
         meme = 'BATMAN_SLAPPING_ROBIN'
         random.choice.return_value = meme
-        mock_imgflip_response = Mock(content=example_imgflip_img_blob)
+        mock_imgflip_response = Mock(
+            status_code=200,
+            content=example_imgflip_img_blob,
+        )
         requests.get.return_value = mock_imgflip_response
         img_bytes = Mock()
         bytesio_class.return_value = img_bytes
         twython.upload_media.return_value = example_twitter_upload_response
         mo()
+        logger.error.assert_not_called()
         assert twython.update_status.call_count == 2
         assert sleep.call_count == 2
     teardown_db(test_db)
@@ -777,20 +893,24 @@ def test_call(sleep, twython_class, bytesio_class, requests, random, logger):
 @patch('memeoverflow.memeoverflow.Twython')
 @patch('memeoverflow.memeoverflow.sleep')
 def test_call_fail(sleep, twython_class, bytesio_class, requests, random, logger):
-    n = 2
-    data = {
-        'pagesize': n,
-        'site': fake_stack_with_key['site'],
-        'key': fake_stack_with_key['key'],
-    }
-
     twython = Mock()
     twython_class.return_value = twython
     teardown_db(test_db)
     with MemeOverflow(fake_twitter, fake_imgflip, fake_stack_with_key, test_db) as mo:
-        mock_se_response = Mock(json=Mock(return_value=example_se_response))
-        mock_imgflip_response = Mock(content=example_imgflip_img_blob)
-        requests.get.side_effect = cycle([mock_se_response, mock_imgflip_response])
+        mock_se_response = Mock(
+            status_code=200,
+            json=Mock(return_value=example_se_response),
+        )
+        mock_imgflip_get_response = Mock(
+            status_code=200,
+            content=example_imgflip_img_blob,
+        )
+        requests.get.side_effect = cycle([mock_se_response, mock_imgflip_get_response])
+        mock_imgflip_post_response = Mock(
+            status_code=200,
+            json=Mock(return_value=example_imgflip_response),
+        )
+        requests.post.return_value = mock_imgflip_post_response
         meme = 'BATMAN_SLAPPING_ROBIN'
         random.choice.return_value = meme
         mock_imgflip_response = Mock(content=example_imgflip_img_blob)
