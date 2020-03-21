@@ -225,8 +225,7 @@ def test_get_se_questions_with_key_and_userid(requests):
 
 @patch('memeoverflow.memeoverflow.logger')
 @patch('memeoverflow.memeoverflow.requests')
-@patch('memeoverflow.memeoverflow.sleep')
-def test_get_se_questions_fail_request(sleep, requests, logger):
+def test_get_se_questions_fail_request(requests, logger):
     n = 2
     data = {
         'pagesize': n,
@@ -236,18 +235,19 @@ def test_get_se_questions_fail_request(sleep, requests, logger):
 
     teardown_db(test_db)
     with MemeOverflow(fake_twitter, fake_imgflip, fake_stack_with_key, test_db) as mo:
-        requests.get.return_value = Mock(status_code=400)
+        requests.get.return_value = Mock(
+            status_code=400,
+            json=Mock(return_value={'error_message': 'error'}),
+        )
         questions = mo.get_se_questions(n)
         requests.get.assert_called_once_with(stack_url, data)
         logger.error.assert_called_once()
-        sleep.assert_called_once()
-        assert questions == []
+        assert questions is None
     teardown_db(test_db)
 
 @patch('memeoverflow.memeoverflow.logger')
 @patch('memeoverflow.memeoverflow.requests')
-@patch('memeoverflow.memeoverflow.sleep')
-def test_get_se_questions_bad_request(sleep, requests, logger):
+def test_get_se_questions_bad_request(requests, logger):
     n = 2
     data = {
         'pagesize': n,
@@ -257,18 +257,19 @@ def test_get_se_questions_bad_request(sleep, requests, logger):
 
     teardown_db(test_db)
     with MemeOverflow(fake_twitter, fake_imgflip, fake_stack_with_key, test_db) as mo:
-        requests.get.return_value = Mock(status_code=400)
+        requests.get.return_value = Mock(
+            status_code=400,
+            json=Mock(return_value={'error_message': 'error'}),
+        )
         questions = mo.get_se_questions(n)
         requests.get.assert_called_once_with(stack_url, data)
         logger.error.assert_called_once()
-        sleep.assert_called_once()
-        assert questions == []
+        assert questions is None
     teardown_db(test_db)
 
 @patch('memeoverflow.memeoverflow.logger')
 @patch('memeoverflow.memeoverflow.requests')
-@patch('memeoverflow.memeoverflow.sleep')
-def test_get_se_questions_fail_bad_json(sleep, requests, logger):
+def test_get_se_questions_fail_bad_json(requests, logger):
     n = 2
     data = {
         'pagesize': n,
@@ -286,8 +287,7 @@ def test_get_se_questions_fail_bad_json(sleep, requests, logger):
         questions = mo.get_se_questions(n)
         requests.get.assert_called_once_with(stack_url, data)
         logger.error.assert_called_once()
-        sleep.assert_called_once()
-        assert questions == []
+        assert questions is None
     teardown_db(test_db)
 
 def test_get_question_url_no_referral():
@@ -717,14 +717,12 @@ def test_tweet(bytesio_class, twython_class, requests):
 
 @patch('memeoverflow.memeoverflow.logger')
 @patch('memeoverflow.memeoverflow.requests')
-@patch('memeoverflow.memeoverflow.sleep')
-def test_tweet_fail_imgflip(sleep, requests, logger):
+def test_tweet_fail_imgflip(requests, logger):
     teardown_db(test_db)
     with MemeOverflow(fake_twitter, fake_imgflip, fake_stack_with_key, test_db) as mo:
         requests.get.return_value = Mock(status_code=400)
         mo.tweet('test', example_imgflip_img_url)
         logger.error.assert_called_once()
-        sleep.assert_called_once()
     teardown_db(test_db)
 
 @patch('memeoverflow.memeoverflow.logger')
@@ -826,13 +824,6 @@ def test_generate_meme_and_tweet_long_question(twython_class, bytesio_class, req
         assert mo.db.question_is_known(example_question['question_id'])
     teardown_db(test_db)
 
-def test_generate_meme_and_tweet_known_question():
-    teardown_db(test_db)
-    with MemeOverflow(fake_twitter, fake_imgflip, fake_stack_with_key, test_db) as mo:
-        mo.db.insert_question(example_question['question_id'])
-        assert not mo.generate_meme_and_tweet(example_question)
-    teardown_db(test_db)
-
 @patch('memeoverflow.memeoverflow.sleep')
 def test_generate_meme_and_tweet_fail(sleep):
     teardown_db(test_db)
@@ -885,6 +876,18 @@ def test_call(sleep, twython_class, bytesio_class, requests, random, logger):
         assert twython.update_status.call_count == 2
         assert sleep.call_count == 2
     teardown_db(test_db)
+
+@patch('memeoverflow.memeoverflow.requests')
+@patch('memeoverflow.memeoverflow.sleep')
+def test_call_no_questions(sleep, requests):
+    with MemeOverflow(fake_twitter, fake_imgflip, fake_stack_with_key, test_db) as mo:
+        mock_se_response = Mock(
+            status_code=400,
+            json=Mock(return_value=empty_dict)
+        )
+        requests.get.return_value = mock_se_response
+        mo()
+        assert sleep.call_count == 1
 
 @patch('memeoverflow.memeoverflow.logger')
 @patch('memeoverflow.memeoverflow.random')

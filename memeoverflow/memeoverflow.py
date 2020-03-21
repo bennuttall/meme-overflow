@@ -118,13 +118,21 @@ class MemeOverflow:
 
     def __call__(self):
         questions = self.get_se_questions()
-        for q in questions:
-            tweeted = self.generate_meme_and_tweet(q)
-            if tweeted:
-                sleep(60*5)
+        if questions:
+            for q in questions:
+                tweeted = self.generate_meme_and_tweet(q)
+                if tweeted:
+                    sleep(60*5)
+                else:
+                    sleep(60)
+        else:
+            sleep(60*5)
 
     def get_se_questions(self, n=100):
-        "Retreive n questions from the StackExchange site and return as a list"
+        """
+        Retreive n questions from the StackExchange site and return as a list.
+        Note: filters out known questions.
+        """
         params = {
             'pagesize': n,
             'site': self.stackexchange['site'],
@@ -133,13 +141,22 @@ class MemeOverflow:
         r = requests.get(stack_url, params)
         if r.status_code == 200:
             try:
-                return r.json()['items']
+                # filter out known questions
+                new_questions = [
+                    q
+                    for q in r.json()['items']
+                    if not self.db.question_is_known(q['question_id'])
+                ]
+                logger.info(f'{len(new_questions)} new questions')
+                return new_questions
             except (JSONDecodeError, KeyError) as e:
                 logger.error(f'{e.__class__.__name__}: {e}')
         else:
-            logger.error(f'Unable to connect to imgflip: status code {r.status_code}')
-        sleep(60)
-        return []
+            try:
+                error = r.json()['error_message']
+                logger.error(f'Unable to connect to Stack Exchage: status code {r.status_code} - {error}')
+            except (JSONDecodeError, KeyError):
+                logger.error(f'Unable to connect to Stack Exchage: status code {r.status_code}')
 
     def choose_meme_template(self, text):
         """
@@ -259,7 +276,6 @@ class MemeOverflow:
                 raise
         else:
             logger.error(f'Unable to connect to imgflip: status code {r.status_code}')
-            sleep(60)
 
     def get_question_url(self, url):
         """
@@ -285,8 +301,6 @@ class MemeOverflow:
         question_title = html.unescape(question['title'])
         question_url = self.get_question_url(question['link'])
         question_id = question['question_id']
-        if self.db.question_is_known(question_id):
-            return False
         tags = tags_to_hashtags(question['tags'])
         status = f'{question_title} {question_url} {tags}'
         if len(status) > 240:
@@ -297,7 +311,6 @@ class MemeOverflow:
             self.tweet(status, img_url)
             logger.info(f'Tweeted: {question_title} [{meme}]')
         except TwythonError:
-            sleep(60)
             return False
         self.db.insert_question(question_id)
         return True
