@@ -13,22 +13,27 @@ NAME:=$(shell $(PYTHON) $(PYFLAGS) setup.py --name)
 VER:=$(shell $(PYTHON) $(PYFLAGS) setup.py --version)
 PYVER:=$(shell $(PYTHON) $(PYFLAGS) -c "import sys; print('py%d.%d' % sys.version_info[:2])")
 
+$(DIST_TAR): $(PY_SOURCES) $(SUBDIRS)
+	$(PYTHON) $(PYFLAGS) setup.py sdist
+
+$(DIST_WHEEL): $(PY_SOURCES) $(SUBDIRS)
+	$(PYTHON) $(PYFLAGS) setup.py bdist_wheel
+
+$(DISTS): $(PY_SOURCES) $(SUBDIRS)
+	$(PYTHON) $(PYFLAGS) setup.py sdist bdist_wheel
+
 # Calculate the name of all outputs
 DIST_WHEEL=dist/$(NAME)-$(VER)-py3-none-any.whl
 DIST_TAR=dist/$(NAME)-$(VER).tar.gz
-
 
 # Default target
 all:
 	@echo "make install - Install on local system"
 	@echo "make develop - Install symlinks for development"
 	@echo "make test - Run tests"
-	@echo "make source - Create source package"
-	@echo "make tar - Generate a source tar package"
 	@echo "make dist - Generate all packages"
 	@echo "make clean - Get rid of all generated files"
 	@echo "make release - Create and tag a new release"
-	@echo "make upload - Upload the new release to repositories"
 
 install: $(SUBDIRS)
 	$(PYTHON) $(PYFLAGS) setup.py install --root $(DEST_DIR)
@@ -36,6 +41,8 @@ install: $(SUBDIRS)
 source: $(DIST_TAR)
 
 wheel: $(DIST_WHEEL)
+
+dist: $(DIST_WHEEL)
 
 tar: $(DIST_TAR)
 
@@ -60,7 +67,7 @@ clean:
 release: $(DIST_TAR) $(DIST_WHEEL)
 	git tag -s v$(VER) -m "Release v$(VER)"
 	git push --tags
-	# build a source archive and upload to PyPI
+	# build sdist and bdist and upload to PyPI
 	$(TWINE) upload $(DIST_TAR) $(DIST_WHEEL)
 
-.PHONY: all install develop test source wheel tar dist clean tags release upload $(SUBDIRS)
+.PHONY: all install develop test source wheel tar dist clean tags release $(SUBDIRS)

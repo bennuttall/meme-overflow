@@ -11,7 +11,7 @@ if not sys.version_info >= (3, 6):
     raise RuntimeError('This application requires Python 3.6 or later')
 
 __project__ = 'memeoverflow'
-__version__ = '0.7.0'
+__version__ = '0.7.1'
 __author__ = 'Ben Nuttall'
 __author_email__ = 'ben@bennuttall.com'
 __url__ = 'https://github.com/bennuttall/meme-overflow'
