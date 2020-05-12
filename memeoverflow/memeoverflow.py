@@ -56,12 +56,22 @@ def tags_to_hashtags(tags):
          => '#foo #bar #foobar'
     """
     hashtags = set()
+    replacements = (
+        ('.net', 'dotnet'),
+        ('c#', 'csharp'),
+        ('c++', 'cpp'),
+        ('python2x', 'python2'),
+        ('python3x', 'python3'),
+        ('-', ''),
+        ('.', ''),
+    )
     for tag in tags:
-        hashtag = tag.replace('-', '').replace('.', '')
+        for a, b in replacements:
+            tag = tag.replace(a, b)
         try:
-            int(hashtag)
+            int(tag)
         except ValueError:
-            hashtags.add(f'#{hashtag}')
+            hashtags.add(f'#{tag}')
     return ' '.join(hashtags)
 
 

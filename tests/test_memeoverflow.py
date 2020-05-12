@@ -131,6 +131,16 @@ def test_tags_to_hashtags():
     hashtags = tags_to_hashtags(tags)
     assert set(hashtags.split()) == {'#foo', '#bar', '#foobar'}
 
+    tags = ['c', 'c#', 'c#8', 'c++', 'c++11', '.net']
+    hashtags = tags_to_hashtags(tags)
+    assert set(hashtags.split()) == {
+        '#c', '#csharp', '#csharp8', '#cpp', '#cpp11', '#dotnet',
+    }
+
+    tags = ['python', 'python2x', 'python3x']
+    hashtags = tags_to_hashtags(tags)
+    assert set(hashtags.split()) == {'#python', '#python2', '#python3'}
+
 def test_bad_init():
     teardown_db(test_db)
     with pytest.raises(TypeError):
