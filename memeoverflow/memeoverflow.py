@@ -192,18 +192,19 @@ class MemeOverflow:
         elif text.lower().startswith('if') and text.endswith('?'):
             meme = 'PHILOSORAPTOR'
         else:
-            meme = random.choice(list(MEMES.keys()))
-
-            if meme in (
+            # don't allow these to be picked at random
+            special_memes = {
                 'IS_THIS_A_PIGEON',
                 'WELL_YES_BUT_ACTUALLY_NO',
                 'DR_EVIL_LASER',
                 'PHILOSORAPTOR',
-            ):
-                # try again
-                return self.choose_meme_template(text)
+            }
+            meme = random.choice(set(MEMES.keys()) - special_memes)
 
-            elif meme == 'PETER_PARKER_CRY':
+            if meme == 'PETER_PARKER_CRY':
+                text0 = None
+                text1 = text
+            elif meme == 'BIKE_FALL':
                 text0 = None
                 text1 = text
             elif meme == 'BUT_THATS_NONE_OF_MY_BUSINESS':

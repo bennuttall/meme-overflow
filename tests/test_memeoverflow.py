@@ -378,24 +378,6 @@ def test_choose_meme_template(random):
             expected_text1='See! Nobody cares'
         )
 
-        # try pigeon, well yes and dr evil but none match criteria, so skip
-        # them all and keep trying until a no-rules one appears
-        assert_meme_choice(
-            mo=mo,
-            random=random,
-            text='test',
-            random_memes=[
-                'IS_THIS_A_PIGEON',
-                'WELL_YES_BUT_ACTUALLY_NO',
-                'DR_EVIL_LASER',
-                'PHILOSORAPTOR',
-                'BATMAN_SLAPPING_ROBIN',
-            ],
-            chosen_meme='BATMAN_SLAPPING_ROBIN',
-            expected_text0='test',
-            expected_text1=None
-        )
-
         # word "possible" trigger
         assert_meme_choice(
             mo=mo,
@@ -575,6 +557,17 @@ def test_choose_meme_template(random):
             chosen_meme='MUGATU_SO_HOT_RIGHT_NOW',
             expected_text0='test',
             expected_text1="So hot right now"
+        )
+
+        # BIKE_FALL
+        assert_meme_choice(
+            mo=mo,
+            random=random,
+            text='test',
+            random_memes=['BIKE_FALL'],
+            chosen_meme='BIKE_FALL',
+            expected_text0=None,
+            expected_text1="test"
         )
     teardown_db(test_db)
 
