@@ -59,11 +59,14 @@ def tags_to_hashtags(tags):
     replacements = (
         ('.net', 'dotnet'),
         ('c#', 'csharp'),
+        ('f#', 'fsharp'),
         ('c++', 'cpp'),
+        ('g++', 'gpp'),
         ('python2x', 'python2'),
         ('python3x', 'python3'),
         ('-', ''),
         ('.', ''),
+        ('b+', 'bplus'),
     )
     for tag in tags:
         for a, b in replacements:
@@ -199,7 +202,7 @@ class MemeOverflow:
                 'DR_EVIL_LASER',
                 'PHILOSORAPTOR',
             }
-            meme = random.choice(set(MEMES.keys()) - special_memes)
+            meme = random.choice(list(set(MEMES.keys()) - special_memes))
 
             if meme in ('PETER_PARKER_CRY', 'BIKE_FALL', 'PICARD_MAKE_IT_SO'):
                 text0 = None

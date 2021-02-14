@@ -11,6 +11,7 @@ all:
 	@echo "make clean - Remove all generated files"
 	@echo "make lint - Run linter"
 	@echo "make test - Run tests"
+	@echo "make release - Upload to PyPI"
 
 install:
 	pip install .
@@ -36,4 +37,4 @@ test: lint
 release: build
 	twine upload dist/*
 
-.PHONY: all install develop build clean lint test
+.PHONY: all install develop build clean lint test release
