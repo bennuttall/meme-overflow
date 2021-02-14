@@ -201,10 +201,7 @@ class MemeOverflow:
             }
             meme = random.choice(set(MEMES.keys()) - special_memes)
 
-            if meme == 'PETER_PARKER_CRY':
-                text0 = None
-                text1 = text
-            elif meme == 'BIKE_FALL':
+            if meme in ('PETER_PARKER_CRY', 'BIKE_FALL', 'PICARD_MAKE_IT_SO'):
                 text0 = None
                 text1 = text
             elif meme == 'BUT_THATS_NONE_OF_MY_BUSINESS':

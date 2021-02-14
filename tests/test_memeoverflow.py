@@ -568,6 +568,18 @@ def test_choose_meme_template(random, fake_twitter, fake_imgflip, fake_stack_wit
             expected_text0=None,
             expected_text1="test"
         )
+
+        # PICARD_MAKE_IT_SO
+        assert_meme_choice(
+            mo=mo,
+            random=random,
+            text='test',
+            random_memes=['PICARD_MAKE_IT_SO'],
+            chosen_meme='PICARD_MAKE_IT_SO',
+            expected_text0=None,
+            expected_text1="test"
+        )
+
     teardown_db(test_db)
 
 @patch('memeoverflow.memeoverflow.random')
