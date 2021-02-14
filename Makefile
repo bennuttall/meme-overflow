@@ -16,6 +16,8 @@ install:
 	pip install .
 
 develop:
+	pip install -U pip
+	pip install -U wheel setuptools twine
 	pip install -e .[test]
 
 build: clean
@@ -30,5 +32,8 @@ lint:
 test: lint
 	coverage run --rcfile coverage.cfg -m pytest -v tests
 	coverage report --rcfile coverage.cfg
+
+release: build
+	twine upload dist/*
 
 .PHONY: all install develop build clean lint test
