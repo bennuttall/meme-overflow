@@ -1,21 +1,21 @@
-from .db import MemeDatabase
-from .imgflip import MEMES
-from .exc import StackExchangeNoKeyWarning
-
 import random
 from time import sleep
 from io import BytesIO
 import html
 import warnings
+from json import JSONDecodeError
 
 import requests
-from json import JSONDecodeError
 from twython import Twython, TwythonError
 from logzero import logger
 
+from .db import MemeDatabase
+from .imgflip import MEMES
+from .exc import StackExchangeNoKeyWarning
 
-imgflip_url = 'https://api.imgflip.com/caption_image'
-stack_url = 'https://api.stackexchange.com/2.2/questions'
+
+IMGFLIP_URL = 'https://api.imgflip.com/caption_image'
+STACK_URL = 'https://api.stackexchange.com/2.2/questions'
 
 
 def validate_keys(name, d, keys):
@@ -151,7 +151,7 @@ class MemeOverflow:
             'site': self.stackexchange['site'],
             'key': self.stackexchange.get('key', None),
         }
-        r = requests.get(stack_url, params)
+        r = requests.get(STACK_URL, params)
         if r.status_code == 200:
             try:
                 # filter out known questions
@@ -261,7 +261,7 @@ class MemeOverflow:
             'text0': text0,
             'text1': text1,
         }
-        r = requests.post(imgflip_url, data=data)
+        r = requests.post(IMGFLIP_URL, data=data)
         if r.status_code == 200:
             try:
                 img_url = r.json()['data']['url']
