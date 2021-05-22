@@ -12,6 +12,8 @@ questions.
 Take questions posted on a particular Stack Exchange site, generate a meme out
 of them and tweet them.
 
+.. image:: https://raw.githubusercontent.com/bennuttall/meme-overflow/main/fry.jpg
+
 Uses the following APIs:
 
 - `Stack Exchange`_

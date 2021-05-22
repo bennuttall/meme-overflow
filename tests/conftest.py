@@ -17,8 +17,8 @@ def fake_twitter():
 @pytest.fixture()
 def fake_imgflip():
     return {
-        'user': 'imgflip_user',
-        'pass': 'imgflip_pass',
+        'username': 'imgflip_user',
+        'password': 'imgflip_pass',
     }
 
 @pytest.fixture()
