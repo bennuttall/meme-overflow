@@ -16,8 +16,8 @@ twitter = {
 }
 
 imgflip = {
-    'user': '',
-    'pass': '',
+    'username': '',
+    'password': '',
 }
 
 db_path = '/home/ben/bots/memes/memes.db'

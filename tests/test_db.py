@@ -16,34 +16,19 @@ def test_database_bad_connect():
     teardown_db(db_path)
     with pytest.raises(TypeError):
         MemeDatabase()
-    with pytest.raises(TypeError):
-        MemeDatabase(None, 'foo')
-    with pytest.raises(TypeError):
-        MemeDatabase(123, 'foo')
-    with pytest.raises(TypeError):
-        MemeDatabase('', 'foo')
-    with pytest.raises(TypeError):
-        MemeDatabase('foo',)
-    with pytest.raises(TypeError):
-        MemeDatabase('foo', None)
-    with pytest.raises(TypeError):
-        MemeDatabase('foo', '')
-    with pytest.raises(TypeError):
-        MemeDatabase(db_path=db_path)
-        teardown_db(db_path)
 
 def test_database_good_connect():
     teardown_db(db_path)
     with MemeDatabase('foo', db_path) as db:
-        assert repr(db).startswith('<MemeDatabase')
-        assert repr(db).endswith('site foo>')
+        assert repr(db).startswith("<MemeDatabase")
+        assert repr(db).endswith("site='foo'>")
     teardown_db(db_path)
 
 def test_database_init():
     teardown_db(db_path)
     with MemeDatabase('foo', db_path) as db:
         cursor = db.conn.cursor()
-        cursor.execute(f'select count(*) from foo')
+        cursor.execute(f"select count(*) from foo")
         result = cursor.fetchone()
         assert result[0] == 0
         cursor.close()
@@ -55,10 +40,10 @@ def test_database_insert():
     with MemeDatabase('foo', db_path) as db:
         db.insert_question(123)
         cursor = db.conn.cursor()
-        cursor.execute(f'select count(*) from foo')
+        cursor.execute(f"select count(*) from foo")
         result = cursor.fetchone()
         assert result[0] == 1
-        cursor.execute(f'select question_id from foo')
+        cursor.execute(f"select question_id from foo")
         result = cursor.fetchone()
         assert result[0] == 123
         cursor.close()
@@ -82,3 +67,4 @@ def test_database_multi_insert():
             assert not db.question_is_known(id)
             db.insert_question(id)
             assert db.question_is_known(id)
+    teardown_db(db_path)
